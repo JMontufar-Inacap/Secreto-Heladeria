@@ -28,8 +28,8 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-unsafe")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = []
+DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
