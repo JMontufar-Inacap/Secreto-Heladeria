@@ -1,0 +1,29 @@
+{% extends 'heladeria/base_generic.html' %}
+
+{% block content %}
+<h1>Ventas</h1>
+<table>
+    <thead>
+        <tr>
+            <th>ID Venta</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for venta in ventas %}
+        <tr>
+            <td><a href="{% url 'venta_detail' venta.id %}">{{ venta.id }}</a></td>
+            <td>{{ venta.usuario.username }}</td>
+            <td>{{ venta.fecha }}</td>
+            <td>{{ venta.total }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No hay ventas disponibles.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

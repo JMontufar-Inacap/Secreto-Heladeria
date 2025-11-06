@@ -1,0 +1,69 @@
+{% extends 'heladeria/base_generic.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mi Perfil</h2>
+    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Datos del usuario</h4>
+                {{ uform.as_p }}
+            </div>
+
+            <div class="col-md-6">
+                <h4>Perfil</h4>
+
+                {% if pform.instance.avatar %}
+                <div class="text-center mb-3">
+                    <img src="{{ pform.instance.avatar.url }}" 
+                         alt="Avatar actual"
+                         class="rounded-circle border shadow-sm mb-2"
+                         width="130" height="130">
+                    <p class="text-muted mb-1">Avatar actual</p>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ pform.avatar.id_for_label }}" class="form-label fw-semibold">Cambiar avatar:</label>
+                    <input type="file" name="{{ pform.avatar.name }}" id="{{ pform.avatar.id_for_label }}" 
+                           class="form-control" accept="image/*">
+                    {% if pform.avatar.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ pform.avatar.errors.as_text|linebreaksbr }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ pform.telefono.id_for_label }}" class="form-label fw-semibold">Teléfono:</label>
+                    {{ pform.telefono }}
+                    {% if pform.telefono.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ pform.telefono.errors.as_text|linebreaksbr }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-success me-2">Guardar cambios</button>
+                <a href="{% url 'cambiar_password' %}" class="btn btn-warning">Cambiar contraseña</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}
+<script>
+{% for message in messages %}
+Swal.fire({
+    icon: '{{ message.tags }}' === 'success' ? 'success' : 'error',
+    title: '{{ message|escapejs }}',
+    timer: 2500,
+    showConfirmButton: false
+});
+{% endfor %}
+</script>
+{% endif %}
+{% endblock %}

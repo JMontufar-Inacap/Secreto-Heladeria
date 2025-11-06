@@ -1,0 +1,75 @@
+{% extends "heladeria/base_generic.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Reporte de Ventas</h2>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label">Producto:</label>
+            <select name="producto" class="form-select">
+                <option value="todos">Todos</option>
+                {% for p in productos %}
+                    <option value="{{ p.id }}" {% if p.id|stringformat:"s" == producto_seleccionado %}selected{% endif %}>{{ p.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Periodo:</label>
+            <select name="periodo" class="form-select" onchange="toggleFechas(this.value)">
+                <option value="dia" {% if periodo == "dia" %}selected{% endif %}>Hoy</option>
+                <option value="semana" {% if periodo == "semana" %}selected{% endif %}>Esta semana</option>
+                <option value="mes" {% if periodo == "mes" %}selected{% endif %}>Este mes</option>
+                <option value="año" {% if periodo == "año" %}selected{% endif %}>Este año</option>
+                <option value="personalizado" {% if periodo == "personalizado" %}selected{% endif %}>Personalizado</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 personalizado" style="display: none;">
+            <label class="form-label">Desde:</label>
+            <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+        </div>
+        <div class="col-md-2 personalizado" style="display: none;">
+            <label class="form-label">Hasta:</label>
+            <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+
+    <h5>Total general: <strong>${{ total_general|floatformat:2 }}</strong></h5>
+
+    <table class="table table-bordered mt-3">
+        <thead class="table-light">
+            <tr>
+                <th>Producto</th>
+                <th>Unidades Vendidas</th>
+                <th>Total Vendido ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in resumen %}
+            <tr>
+                <td>{{ r.producto__nombre }}</td>
+                <td>{{ r.unidades_vendidas }}</td>
+                <td>${{ r.total_vendido|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">No hay ventas en este periodo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function toggleFechas(periodo) {
+    const campos = document.querySelectorAll('.personalizado');
+    campos.forEach(c => c.style.display = periodo === 'personalizado' ? 'block' : 'none');
+}
+toggleFechas("{{ periodo }}");
+</script>
+{% endblock %}

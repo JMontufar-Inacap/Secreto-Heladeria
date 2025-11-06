@@ -1,0 +1,46 @@
+{% extends 'heladeria/base_generic.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>🧾 Detalle de Venta #{{ venta.id }}</h3>
+  <p><strong>Cliente:</strong> {{ venta.cliente.nombre|default:"-" }}</p>
+  <p><strong>Usuario:</strong> {{ venta.usuario.username }}</p>
+  <p><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
+  <p><strong>Estado:</strong>
+    {% if venta.estado == 'PENDING' %}
+      <span class="badge bg-warning text-dark">Pendiente</span>
+    {% else %}
+      <span class="badge bg-success">Completada</span>
+    {% endif %}
+  </p>
+
+  <hr>
+
+  <h5>Productos</h5>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in detalles %}
+      <tr>
+        <td>{{ d.producto.nombre }}</td>
+        <td>{{ d.cantidad }}</td>
+        <td>${{ d.producto.precio }}</td>
+        <td>${{ d.subtotal }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="table-secondary">
+        <td colspan="3" class="text-end fw-bold">Total</td>
+        <td class="fw-bold">${{ venta.total }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <a href="{% url 'lista_ventas' %}" class="btn btn-outline-primary mt-3">Volver</a>
+</div>
+{% endblock %}

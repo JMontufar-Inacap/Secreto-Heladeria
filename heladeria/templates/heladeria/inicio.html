@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Bienvenido</title>
+    </head>
+    <body>
+        <h1>Hola {{ contexto.nombre }}</h1>
+        {% for d in dispositivos %}
+            <li>{{ d.nombre }} - {{ d.categoria }} {{ d.categoria.estado }}</li>
+            {% empty %}
+            <li>No hay dispositivos</li>
+        {% endfor %}
+
+    </body>
+</html>

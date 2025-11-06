@@ -1,0 +1,71 @@
+{% extends 'heladeria/base_generic.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+  }
+
+  .login-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .login-card h3 {
+    font-weight: 700;
+    color: #212529;
+  }
+
+  .login-card p {
+    color: #6c757d;
+  }
+
+  .login-card .btn-primary {
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 0.6rem;
+  }
+
+  .login-card input {
+    border-radius: 6px !important;
+  }
+</style>
+
+<div class="login-container">
+  <div class="login-card text-center">
+    <h3 class="mb-2">Secreto Heladería</h3>
+    <p class="mb-4">Inicia sesión para continuar</p>
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-3">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+      </div>
+      <div class="mb-3">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
+    </form>
+
+    <div class="mt-4 small text-muted">
+      <a href="#" class="text-decoration-none">¿Olvidaste tu contraseña?</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

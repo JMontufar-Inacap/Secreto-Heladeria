@@ -1,0 +1,12 @@
+{% extends 'heladeria/base_generic.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h3>🛠 Cambiar estado de la venta #{{ venta.id }}</h3>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Guardar cambios</button>
+    <a href="{% url 'lista_ventas' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,236 @@
+{% extends 'heladeria/base_generic.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Gestión de Ventas</h2>
+
+    <form method="get" class="mb-3">
+        <label for="estado">Filtrar por estado:</label>
+        <select name="estado" id="estado" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="PENDING" {% if estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
+            <option value="COMPLETED" {% if estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
+        </select>
+    </form>
+
+    <div class="mb-3">
+        <button class="btn btn-danger me-2" onclick="eliminarSeleccionadas()">Eliminar seleccionadas</button>
+        <button class="btn btn-secondary" onclick="cambiarEstadoSeleccionadas()">Cambiar estado</button>
+    </div>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+
+                <th>
+                    <a href="?sort=id&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
+                        ID 
+                        {% if sort == 'id' %}
+                            {% if direction == 'asc' %}
+                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
+                            {% else %}
+                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th>
+                    <a href="?sort=usuario__username&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
+                        Usuario
+                        {% if sort == 'usuario__username' %}
+                            {% if direction == 'asc' %}
+                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
+                            {% else %}
+                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th>
+                    <a href="?sort=cliente__nombre&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
+                        Cliente
+                        {% if sort == 'cliente__nombre' %}
+                            {% if direction == 'asc' %}
+                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
+                            {% else %}
+                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th>
+                    <a href="?sort=fecha&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
+                        Fecha
+                        {% if sort == 'fecha' %}
+                            {% if direction == 'asc' %}
+                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
+                            {% else %}
+                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th>
+                    <a href="?sort=estado&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
+                        Estado
+                        {% if sort == 'estado' %}
+                            {% if direction == 'asc' %}
+                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
+                            {% else %}
+                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th>
+                    <a href="?sort=total&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
+                        Total
+                        {% if sort == 'total' %}
+                            {% if direction == 'asc' %}
+                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
+                            {% else %}
+                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        {% endif %}
+                    </a>
+                </th>
+
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+
+        <tbody>
+            {% for venta in ventas %}
+            <tr id="venta-{{ venta.id }}">
+                <td><input type="checkbox" class="venta-checkbox" value="{{ venta.id }}"></td>
+                <td>{{ venta.id }}</td>
+                <td>{{ venta.usuario.username }}</td>
+                <td>{{ venta.cliente.nombre|default:"-" }}</td>
+                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <span class="badge {% if venta.estado == 'COMPLETED' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ venta.get_estado_display }}
+                    </span>
+                </td>
+                <td>${{ venta.total }}</td>
+                <td>
+                    <a href="{% url 'ventas:detalle_venta' venta.id %}" class="btn btn-sm btn-info">Ver</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center text-muted">No hay ventas registradas</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+
+function toggleAll(source) {
+    document.querySelectorAll('.venta-checkbox').forEach(cb => cb.checked = source.checked);
+}
+
+function getSeleccionadas() {
+    return Array.from(document.querySelectorAll('.venta-checkbox:checked')).map(cb => cb.value);
+}
+
+function eliminarSeleccionadas() {
+    const seleccionadas = getSeleccionadas();
+    if (seleccionadas.length === 0) {
+        Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
+        return;
+    }
+
+    Swal.fire({
+        title: '¿Eliminar ventas seleccionadas?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{% url 'ventas:eliminar_multiples' %}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ids: seleccionadas })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    seleccionadas.forEach(id => document.getElementById(`venta-${id}`).remove());
+                    Swal.fire('Eliminadas', 'Las ventas seleccionadas fueron eliminadas.', 'success');
+                } else {
+                    Swal.fire('Error', 'No se pudieron eliminar las ventas.', 'error');
+                }
+            });
+        }
+    });
+}
+
+function cambiarEstadoSeleccionadas() {
+    const seleccionadas = getSeleccionadas();
+    if (seleccionadas.length === 0) {
+        Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Selecciona el nuevo estado',
+        input: 'select',
+        inputOptions: {
+            'PENDING': 'Pendiente',
+            'COMPLETED': 'Completada'
+        },
+        inputPlaceholder: 'Elegir estado',
+        showCancelButton: true,
+        confirmButtonText: 'Cambiar'
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            fetch(`{% url 'ventas:cambiar_estado_multiples' %}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ids: seleccionadas, nuevo_estado: result.value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Actualizadas', 'El estado de las ventas ha sido cambiado.', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Swal.fire('Error', 'No se pudieron actualizar los estados.', 'error');
+                }
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

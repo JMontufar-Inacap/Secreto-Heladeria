@@ -1,0 +1,31 @@
+{% extends 'heladeria/base_generic.html' %}
+
+{% block content %}
+<h1>Detalle de Venta #{{ venta.id }}</h1>
+
+<h2>Detalles de la Venta</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for detalle in detalles %}
+        <tr>
+            <td>{{ detalle.producto.nombre }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>{{ detalle.subtotal }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No hay detalles para esta venta.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><strong>Total de la venta:</strong> {{ venta.total }}</p>
+{% endblock %}

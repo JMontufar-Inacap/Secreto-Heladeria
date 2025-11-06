@@ -1,0 +1,512 @@
+[
+{
+  "model": "heladeria.organization",
+  "pk": 3,
+  "fields": {
+    "name": "EcoEnergy",
+    "created_at": "2025-09-11T21:24:41.135Z"
+  }
+},
+{
+  "model": "heladeria.organization",
+  "pk": 7,
+  "fields": {
+    "name": "LightCorp",
+    "created_at": "2025-09-11T22:14:59.018Z"
+  }
+},
+{
+  "model": "heladeria.category",
+  "pk": 1,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:23:56.413Z",
+    "updated_at": "2025-09-11T22:23:56.413Z",
+    "deleted_at": null,
+    "name": "Lighting",
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.category",
+  "pk": 2,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:24:20.255Z",
+    "updated_at": "2025-09-11T22:24:20.255Z",
+    "deleted_at": null,
+    "name": "Energy",
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.category",
+  "pk": 3,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:24:31.511Z",
+    "updated_at": "2025-09-11T22:24:31.511Z",
+    "deleted_at": null,
+    "name": "Security",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.category",
+  "pk": 4,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:24:47.468Z",
+    "updated_at": "2025-09-11T22:24:47.468Z",
+    "deleted_at": null,
+    "name": "Computers",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.category",
+  "pk": 5,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:48:09.047Z",
+    "updated_at": "2025-09-12T02:48:09.048Z",
+    "deleted_at": null,
+    "name": "Miscellaneous",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.zone",
+  "pk": 1,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:15:12.452Z",
+    "updated_at": "2025-09-11T22:15:12.453Z",
+    "deleted_at": null,
+    "name": "North",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.zone",
+  "pk": 2,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:22:08.558Z",
+    "updated_at": "2025-09-11T22:22:08.558Z",
+    "deleted_at": null,
+    "name": "South",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.zone",
+  "pk": 3,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:22:19.823Z",
+    "updated_at": "2025-09-11T22:22:19.823Z",
+    "deleted_at": null,
+    "name": "Center",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.zone",
+  "pk": 4,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:22:29.260Z",
+    "updated_at": "2025-09-11T22:22:29.260Z",
+    "deleted_at": null,
+    "name": "Z-1",
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.zone",
+  "pk": 5,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:22:36.581Z",
+    "updated_at": "2025-09-11T22:22:36.581Z",
+    "deleted_at": null,
+    "name": "Z-2",
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.zone",
+  "pk": 6,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:22:44.202Z",
+    "updated_at": "2025-09-11T22:22:44.202Z",
+    "deleted_at": null,
+    "name": "Z-3",
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 1,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:25:47.842Z",
+    "updated_at": "2025-09-11T22:26:23.938Z",
+    "deleted_at": null,
+    "name": "Smart Light Bulb",
+    "category": 1,
+    "zone": 4,
+    "max_consumption": 100,
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 2,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:26:19.337Z",
+    "updated_at": "2025-09-11T22:26:19.337Z",
+    "deleted_at": null,
+    "name": "LED lighting",
+    "category": 1,
+    "zone": 5,
+    "max_consumption": 200,
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 3,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:27:12.883Z",
+    "updated_at": "2025-09-11T22:27:12.883Z",
+    "deleted_at": null,
+    "name": "Desktop PC",
+    "category": 4,
+    "zone": 2,
+    "max_consumption": 5000,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 4,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:27:26.187Z",
+    "updated_at": "2025-09-11T22:27:26.187Z",
+    "deleted_at": null,
+    "name": "Laptop",
+    "category": 4,
+    "zone": 2,
+    "max_consumption": 2324,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 5,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:27:40.376Z",
+    "updated_at": "2025-09-11T22:27:40.376Z",
+    "deleted_at": null,
+    "name": "Gaming PC",
+    "category": 4,
+    "zone": 3,
+    "max_consumption": 3453,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 6,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:28:02.875Z",
+    "updated_at": "2025-09-11T22:28:02.875Z",
+    "deleted_at": null,
+    "name": "Smart CCTV Camera",
+    "category": 3,
+    "zone": 2,
+    "max_consumption": 299,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 7,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:29:05.409Z",
+    "updated_at": "2025-09-11T22:29:05.409Z",
+    "deleted_at": null,
+    "name": "Smart Outdoor Lights",
+    "category": 1,
+    "zone": 5,
+    "max_consumption": 322,
+    "organization": 7
+  }
+},
+{
+  "model": "heladeria.device",
+  "pk": 8,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:30:00.675Z",
+    "updated_at": "2025-09-11T22:30:00.675Z",
+    "deleted_at": null,
+    "name": "Smart Motion Detector",
+    "category": 3,
+    "zone": 1,
+    "max_consumption": 299,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 1,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:52:30.649Z",
+    "updated_at": "2025-09-11T22:55:26.778Z",
+    "deleted_at": "2025-09-01T06:00:00Z",
+    "device": 8,
+    "timestamp": "2025-09-11T22:52:30.649Z",
+    "value": 29.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 2,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:52:50.657Z",
+    "updated_at": "2025-09-11T22:52:50.657Z",
+    "deleted_at": "2025-09-10T00:00:00Z",
+    "device": 8,
+    "timestamp": "2025-09-11T22:52:50.657Z",
+    "value": 214.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 3,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:53:15.620Z",
+    "updated_at": "2025-09-11T22:53:15.622Z",
+    "deleted_at": "2025-09-03T06:00:00Z",
+    "device": 8,
+    "timestamp": "2025-09-11T22:53:15.622Z",
+    "value": 171.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 4,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:53:33.806Z",
+    "updated_at": "2025-09-11T22:55:17.688Z",
+    "deleted_at": "2025-09-12T06:00:00Z",
+    "device": 8,
+    "timestamp": "2025-09-11T22:53:33.806Z",
+    "value": 12451.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 5,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:40:41.055Z",
+    "updated_at": "2025-09-12T02:40:41.055Z",
+    "deleted_at": null,
+    "device": 4,
+    "timestamp": "2025-09-12T02:40:41.055Z",
+    "value": 2146.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 6,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:40:51.561Z",
+    "updated_at": "2025-09-12T02:40:51.561Z",
+    "deleted_at": null,
+    "device": 4,
+    "timestamp": "2025-09-12T02:40:51.561Z",
+    "value": 235.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 7,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:42:14.845Z",
+    "updated_at": "2025-09-12T02:42:14.845Z",
+    "deleted_at": null,
+    "device": 4,
+    "timestamp": "2025-09-12T02:42:14.845Z",
+    "value": 123.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 8,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:42:22.787Z",
+    "updated_at": "2025-09-12T02:42:22.787Z",
+    "deleted_at": null,
+    "device": 4,
+    "timestamp": "2025-09-12T02:42:22.788Z",
+    "value": 647.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 9,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:42:28.819Z",
+    "updated_at": "2025-09-12T02:42:28.819Z",
+    "deleted_at": null,
+    "device": 4,
+    "timestamp": "2025-09-12T02:42:28.819Z",
+    "value": 2275.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 10,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:43:22.168Z",
+    "updated_at": "2025-09-12T02:43:22.168Z",
+    "deleted_at": "2025-08-13T00:00:00Z",
+    "device": 3,
+    "timestamp": "2025-09-12T02:43:22.168Z",
+    "value": 424.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 11,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:43:37.250Z",
+    "updated_at": "2025-09-12T02:43:37.250Z",
+    "deleted_at": "2025-08-20T00:00:00Z",
+    "device": 3,
+    "timestamp": "2025-09-12T02:43:37.250Z",
+    "value": 754.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 12,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:43:57.076Z",
+    "updated_at": "2025-09-12T02:43:57.076Z",
+    "deleted_at": "2025-09-01T02:43:46Z",
+    "device": 6,
+    "timestamp": "2025-09-12T02:43:57.076Z",
+    "value": 112.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.measurement",
+  "pk": 13,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:44:12.282Z",
+    "updated_at": "2025-09-12T02:44:12.282Z",
+    "deleted_at": null,
+    "device": 5,
+    "timestamp": "2025-09-12T02:44:12.282Z",
+    "value": 75741.0,
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.alert",
+  "pk": 1,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-11T22:54:58.125Z",
+    "updated_at": "2025-09-11T22:54:58.125Z",
+    "deleted_at": "2025-09-12T06:00:00Z",
+    "device": 8,
+    "message": "High energy usage",
+    "timestamp": "2025-09-11T22:54:58.125Z",
+    "severity": "CRITICAL",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.alert",
+  "pk": 2,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:41:10.723Z",
+    "updated_at": "2025-09-12T02:41:10.723Z",
+    "deleted_at": null,
+    "device": 4,
+    "message": "High energy usage",
+    "timestamp": "2025-09-12T02:41:10.723Z",
+    "severity": "MEDIUM",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.alert",
+  "pk": 3,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:42:41.890Z",
+    "updated_at": "2025-09-12T02:42:41.890Z",
+    "deleted_at": null,
+    "device": 4,
+    "message": "High energy usage",
+    "timestamp": "2025-09-12T02:42:41.890Z",
+    "severity": "HIGH",
+    "organization": 3
+  }
+},
+{
+  "model": "heladeria.alert",
+  "pk": 4,
+  "fields": {
+    "state": "ACTIVE",
+    "created_at": "2025-09-12T02:44:27.481Z",
+    "updated_at": "2025-09-12T02:44:27.481Z",
+    "deleted_at": null,
+    "device": 5,
+    "message": "High energy usage",
+    "timestamp": "2025-09-12T02:44:27.481Z",
+    "severity": "CRITICAL",
+    "organization": 3
+  }
+}
+]
