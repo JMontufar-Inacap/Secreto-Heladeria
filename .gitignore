@@ -19,11 +19,9 @@ ENV/
 *.pyc
 *.pyo
 *.mo
-*.sqlite3
 
 /staticfiles/
 /static/
-/media/
 
 */migrations/__pycache__/
 
