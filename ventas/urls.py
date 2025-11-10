@@ -9,4 +9,5 @@ urlpatterns = [
     path('<int:venta_id>/eliminar/', views.eliminar_venta, name='eliminar_venta'),
     path('eliminar-multiples/', views.eliminar_multiples, name='eliminar_multiples'),
     path('cambiar-estado-multiples/', views.cambiar_estado_multiples, name='cambiar_estado_multiples'),
+    path('exportar/', views.exportar_ventas_excel, name='exportar_ventas_excel'),
 ]

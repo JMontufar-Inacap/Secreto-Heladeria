@@ -1,37 +1,169 @@
 {% extends 'heladeria/base_generic.html' %}
+{% load static %}
 
 {% block content %}
-<h2>Lista de Clientes</h2>
-<a href="{% url 'crear_cliente' %}" class="btn btn-primary mb-3">Agregar Cliente</a>
-<a href="{% url 'exportar_clientes_excel' %}" class="btn btn-success mb-3 ms-2">
-    Exportar a Excel
-</a>
+<div class="container mt-4">
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Nombre</th>
-            <th>Dirección</th>
-            <th>Teléfono</th>
-            <th>Email</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for cliente in clientes %}
-        <tr>
-            <td>{{ cliente.nombre }}</td>
-            <td>{{ cliente.direccion }}</td>
-            <td>{{ cliente.telefono }}</td>
-            <td>{{ cliente.email }}</td>
-            <td>
-                <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-sm btn-warning">Editar</a>
-                <a href="{% url 'eliminar_cliente' cliente.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5">No hay clientes registrados.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <h2 class="mb-3 text-center">Lista de Clientes</h2>
+
+    <form method="get" class="mb-3 d-flex" role="search">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar cliente..." value="{{ query }}">
+        <button class="btn btn-outline-primary" type="submit">Buscar</button>
+    </form>
+
+    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <a href="{% url 'crear_cliente' %}" class="btn btn-primary me-2">Agregar Cliente</a>
+            <a href="{% url 'exportar_clientes_excel' %}" class="btn btn-success">Exportar a Excel</a>
+        </div>
+
+        <form method="get" class="d-flex align-items-center mt-2 mt-sm-0">
+            {% if query %}
+                <input type="hidden" name="q" value="{{ query }}">
+            {% endif %}
+            {% if sort %}
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+            {% endif %}
+            <label for="per_page" class="me-2 mb-0 text-secondary">Mostrar:</label>
+            <select name="per_page" id="per_page" class="form-select form-select-sm me-2" style="width: auto;" onchange="this.form.submit()">
+                <option value="5" {% if request.GET.per_page == '5' %}selected{% endif %}>5</option>
+                <option value="10" {% if request.GET.per_page == '10' or not request.GET.per_page %}selected{% endif %}>10</option>
+                <option value="20" {% if request.GET.per_page == '20' %}selected{% endif %}>20</option>
+            </select>
+            <span class="text-secondary">por página</span>
+        </form>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <strong>Clientes Registrados</strong>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-striped mb-0 text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>
+                            <a href="?sort=nombre&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Nombre
+                                {% if sort == 'nombre' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>
+                            <a href="?sort=direccion&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Dirección
+                                {% if sort == 'direccion' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>
+                            <a href="?sort=telefono&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Teléfono
+                                {% if sort == 'telefono' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>
+                            <a href="?sort=email&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Email
+                                {% if sort == 'email' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for cliente in page_obj %}
+                    <tr>
+                        <td>{{ cliente.nombre }}</td>
+                        <td>{{ cliente.direccion|default:"-" }}</td>
+                        <td>{{ cliente.telefono|default:"-" }}</td>
+                        <td>{{ cliente.email|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-sm btn-warning">Editar</a>
+                            <a href="{% url 'eliminar_cliente' cliente.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">No hay clientes registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap">
+            <div class="mb-2 mb-sm-0">
+                Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} clientes
+            </div>
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Paginación de clientes">
+                <ul class="pagination mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&sort={{ sort }}&direction={{ direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">« Primero</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&direction={{ direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">‹ Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}&sort={{ sort }}&direction={{ direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&direction={{ direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Siguiente ›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort }}&direction={{ direction }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Último »</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

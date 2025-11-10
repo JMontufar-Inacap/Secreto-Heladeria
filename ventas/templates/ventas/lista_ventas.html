@@ -3,150 +3,191 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Gestión de Ventas</h2>
 
-    <form method="get" class="mb-3">
-        <label for="estado">Filtrar por estado:</label>
-        <select name="estado" id="estado" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
-            <option value="">Todos</option>
-            <option value="PENDING" {% if estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
-            <option value="COMPLETED" {% if estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
-        </select>
+    <h2 class="mb-3 text-center">Gestión de Ventas</h2>
+
+    <form method="get" class="mb-3 d-flex" role="search">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar por cliente o usuario..." value="{{ query }}">
+        <button class="btn btn-outline-primary" type="submit">Buscar</button>
     </form>
 
-    <div class="mb-3">
-        <button class="btn btn-danger me-2" onclick="eliminarSeleccionadas()">Eliminar seleccionadas</button>
-        <button class="btn btn-secondary" onclick="cambiarEstadoSeleccionadas()">Cambiar estado</button>
+    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex flex-wrap align-items-center">
+            <a href="{% url 'ventas:exportar_ventas_excel' %}" class="btn btn-success me-2">Exportar a Excel</a>
+            <button class="btn btn-danger me-2" onclick="eliminarSeleccionadas()">Eliminar seleccionadas</button>
+            <button class="btn btn-secondary me-3" onclick="cambiarEstadoSeleccionadas()">Cambiar estado</button>
+        </div>
+
+        <form method="get" class="d-flex align-items-center mt-2 mt-sm-0">
+            {% if query %}
+                <input type="hidden" name="q" value="{{ query }}">
+            {% endif %}
+            {% if sort %}
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+            {% endif %}
+
+            <label for="estado" class="me-2 mb-0 text-secondary">Estado:</label>
+            <select name="estado" id="estado" class="form-select form-select-sm me-3" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                <option value="PENDING" {% if estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
+                <option value="COMPLETED" {% if estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
+            </select>
+
+            <label for="per_page" class="me-2 mb-0 text-secondary">Mostrar:</label>
+            <select name="per_page" id="per_page" class="form-select form-select-sm me-2" style="width: auto;" onchange="this.form.submit()">
+                <option value="5" {% if request.GET.per_page == '5' %}selected{% endif %}>5</option>
+                <option value="10" {% if request.GET.per_page == '10' or not request.GET.per_page %}selected{% endif %}>10</option>
+                <option value="20" {% if request.GET.per_page == '20' %}selected{% endif %}>20</option>
+            </select>
+            <span class="text-secondary">por página</span>
+        </form>
     </div>
 
-    <table class="table table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <strong>Ventas Registradas</strong>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-striped mb-0 text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                        <th>
+                            <a href="?sort=id&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                ID
+                                {% if sort == 'id' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
 
-                <th>
-                    <a href="?sort=id&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
-                        ID 
-                        {% if sort == 'id' %}
-                            {% if direction == 'asc' %}
-                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
-                            {% else %}
-                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
-                            {% endif %}
-                        {% else %}
-                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                        <th>
+                            <a href="?sort=usuario__username&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Usuario
+                                {% if sort == 'usuario__username' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>
+                            <a href="?sort=cliente__nombre&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Cliente
+                                {% if sort == 'cliente__nombre' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>
+                            <a href="?sort=fecha&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
+                                Fecha
+                                {% if sort == 'fecha' %}
+                                    {% if direction == 'asc' %}
+                                        <i class="fa-solid fa-arrow-up ms-1"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-arrow-down ms-1"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+
+                        <th>Estado</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for venta in page_obj %}
+                    <tr id="venta-{{ venta.id }}">
+                        <td><input type="checkbox" class="venta-checkbox" value="{{ venta.id }}"></td>
+                        <td>{{ venta.id }}</td>
+                        <td>{{ venta.usuario.username }}</td>
+                        <td>{{ venta.cliente.nombre|default:"-" }}</td>
+                        <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="badge {% if venta.estado == 'COMPLETED' %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ venta.get_estado_display }}
+                            </span>
+                        </td>
+                        <td>${{ venta.total_calc|floatformat:0 }}</td>
+                        <td>
+                            <a href="{% url 'ventas:detalle_venta' venta.id %}" class="btn btn-sm btn-info">Ver</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center text-muted">No hay ventas registradas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap">
+            <div class="mb-2 mb-sm-0">
+                Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} ventas
+            </div>
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Paginación de ventas">
+                <ul class="pagination mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">« Primero</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">‹ Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">{{ num }}</a>
+                            </li>
                         {% endif %}
-                    </a>
-                </th>
+                    {% endfor %}
 
-                <th>
-                    <a href="?sort=usuario__username&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
-                        Usuario
-                        {% if sort == 'usuario__username' %}
-                            {% if direction == 'asc' %}
-                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
-                            {% else %}
-                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
-                            {% endif %}
-                        {% else %}
-                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                        {% endif %}
-                    </a>
-                </th>
-
-                <th>
-                    <a href="?sort=cliente__nombre&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
-                        Cliente
-                        {% if sort == 'cliente__nombre' %}
-                            {% if direction == 'asc' %}
-                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
-                            {% else %}
-                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
-                            {% endif %}
-                        {% else %}
-                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                        {% endif %}
-                    </a>
-                </th>
-
-                <th>
-                    <a href="?sort=fecha&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
-                        Fecha
-                        {% if sort == 'fecha' %}
-                            {% if direction == 'asc' %}
-                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
-                            {% else %}
-                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
-                            {% endif %}
-                        {% else %}
-                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                        {% endif %}
-                    </a>
-                </th>
-
-                <th>
-                    <a href="?sort=estado&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
-                        Estado
-                        {% if sort == 'estado' %}
-                            {% if direction == 'asc' %}
-                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
-                            {% else %}
-                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
-                            {% endif %}
-                        {% else %}
-                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                        {% endif %}
-                    </a>
-                </th>
-
-                <th>
-                    <a href="?sort=total&direction={{ next_direction }}{% if estado %}&estado={{ estado }}{% endif %}" class="text-light text-decoration-none">
-                        Total
-                        {% if sort == 'total' %}
-                            {% if direction == 'asc' %}
-                                <i class="fa-solid fa-arrow-up text-light ms-1"></i>
-                            {% else %}
-                                <i class="fa-solid fa-arrow-down text-light ms-1"></i>
-                            {% endif %}
-                        {% else %}
-                            <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                        {% endif %}
-                    </a>
-                </th>
-
-                <th>Acciones</th>
-            </tr>
-        </thead>
-
-
-        <tbody>
-            {% for venta in ventas %}
-            <tr id="venta-{{ venta.id }}">
-                <td><input type="checkbox" class="venta-checkbox" value="{{ venta.id }}"></td>
-                <td>{{ venta.id }}</td>
-                <td>{{ venta.usuario.username }}</td>
-                <td>{{ venta.cliente.nombre|default:"-" }}</td>
-                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-                <td>
-                    <span class="badge {% if venta.estado == 'COMPLETED' %}bg-success{% else %}bg-warning{% endif %}">
-                        {{ venta.get_estado_display }}
-                    </span>
-                </td>
-                <td>${{ venta.total }}</td>
-                <td>
-                    <a href="{% url 'ventas:detalle_venta' venta.id %}" class="btn btn-sm btn-info">Ver</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="text-center text-muted">No hay ventas registradas</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">Siguiente ›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">Último »</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-
 function toggleAll(source) {
     document.querySelectorAll('.venta-checkbox').forEach(cb => cb.checked = source.checked);
 }
@@ -157,10 +198,7 @@ function getSeleccionadas() {
 
 function eliminarSeleccionadas() {
     const seleccionadas = getSeleccionadas();
-    if (seleccionadas.length === 0) {
-        Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
-        return;
-    }
+    if (seleccionadas.length === 0) return Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
 
     Swal.fire({
         title: '¿Eliminar ventas seleccionadas?',
@@ -168,16 +206,12 @@ function eliminarSeleccionadas() {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
         confirmButtonText: 'Sí, eliminar'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(`{% url 'ventas:eliminar_multiples' %}`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids: seleccionadas })
             })
             .then(res => res.json())
@@ -185,9 +219,7 @@ function eliminarSeleccionadas() {
                 if (data.success) {
                     seleccionadas.forEach(id => document.getElementById(`venta-${id}`).remove());
                     Swal.fire('Eliminadas', 'Las ventas seleccionadas fueron eliminadas.', 'success');
-                } else {
-                    Swal.fire('Error', 'No se pudieron eliminar las ventas.', 'error');
-                }
+                } else Swal.fire('Error', 'No se pudieron eliminar.', 'error');
             });
         }
     });
@@ -195,18 +227,12 @@ function eliminarSeleccionadas() {
 
 function cambiarEstadoSeleccionadas() {
     const seleccionadas = getSeleccionadas();
-    if (seleccionadas.length === 0) {
-        Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
-        return;
-    }
+    if (seleccionadas.length === 0) return Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
 
     Swal.fire({
         title: 'Selecciona el nuevo estado',
         input: 'select',
-        inputOptions: {
-            'PENDING': 'Pendiente',
-            'COMPLETED': 'Completada'
-        },
+        inputOptions: { 'PENDING': 'Pendiente', 'COMPLETED': 'Completada' },
         inputPlaceholder: 'Elegir estado',
         showCancelButton: true,
         confirmButtonText: 'Cambiar'
@@ -214,10 +240,7 @@ function cambiarEstadoSeleccionadas() {
         if (result.isConfirmed && result.value) {
             fetch(`{% url 'ventas:cambiar_estado_multiples' %}`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids: seleccionadas, nuevo_estado: result.value })
             })
             .then(res => res.json())
@@ -225,9 +248,7 @@ function cambiarEstadoSeleccionadas() {
                 if (data.success) {
                     Swal.fire('Actualizadas', 'El estado de las ventas ha sido cambiado.', 'success');
                     setTimeout(() => location.reload(), 1000);
-                } else {
-                    Swal.fire('Error', 'No se pudieron actualizar los estados.', 'error');
-                }
+                } else Swal.fire('Error', 'No se pudieron actualizar.', 'error');
             });
         }
     });

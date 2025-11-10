@@ -1,7 +1,7 @@
 {% extends 'heladeria/base_generic.html' %}
 {% block content %}
 <div class="container mt-4">
-  <h3>🧾 Detalle de Venta #{{ venta.id }}</h3>
+  <h3>Detalle de Venta #{{ venta.id }}</h3>
   <p><strong>Cliente:</strong> {{ venta.cliente.nombre|default:"-" }}</p>
   <p><strong>Usuario:</strong> {{ venta.usuario.username }}</p>
   <p><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>

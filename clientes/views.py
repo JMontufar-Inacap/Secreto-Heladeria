@@ -6,8 +6,9 @@ import re
 from django.contrib.auth.decorators import login_required
 import openpyxl
 from django.http import HttpResponse
+from django.core.paginator import Paginator
+from django.db.models import Q
 
-@login_required
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
@@ -46,8 +47,49 @@ class ClienteForm(forms.ModelForm):
 
 @login_required
 def lista_clientes(request):
+    query = request.GET.get("q", "")
+    sort = request.GET.get("sort", "nombre")
+    direction = request.GET.get("direction", "asc")
+    per_page = request.GET.get("per_page", "10")
+
+    # Convertir a int con fallback
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
     clientes = Cliente.objects.all()
-    return render(request, 'clientes/lista_clientes.html', {'clientes': clientes})
+
+    if query:
+        clientes = clientes.filter(
+            Q(nombre__icontains=query) |
+            Q(direccion__icontains=query) |
+            Q(telefono__icontains=query) |
+            Q(email__icontains=query)
+        )
+
+    if direction == "desc":
+        clientes = clientes.order_by(f"-{sort}")
+    else:
+        clientes = clientes.order_by(sort)
+
+    paginator = Paginator(clientes, per_page)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    next_direction = "desc" if direction == "asc" else "asc"
+
+    return render(request, "clientes/lista_clientes.html", {
+        "page_obj": page_obj,
+        "clientes": page_obj.object_list,
+        "query": query,
+        "sort": sort,
+        "direction": direction,
+        "next_direction": next_direction,
+        "per_page": per_page,
+        "total_clientes": paginator.count,
+    })
+
 
 @login_required
 def crear_cliente(request):
