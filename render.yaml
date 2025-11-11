@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: secreto-heladeria
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn monitoreo.wsgi:application"
+    disk:
+      name: media
+      mountPath: /opt/render/project/src/media
