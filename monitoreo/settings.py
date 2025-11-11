@@ -150,4 +150,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = BASE_DIR /'media'
+if os.environ.get('RENDER', None):
+    MEDIA_ROOT = '/opt/render/project/src/media'  # ruta montada en el render.yaml
+else:
+    MEDIA_ROOT = BASE_DIR / 'media'
