@@ -6,7 +6,6 @@ from heladeria.models import Venta, DetalleVenta
 from django.db.models import Sum, F, Q, FloatField
 import json
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-import openpyxl
 from openpyxl import Workbook
 from django.http import HttpResponse
 

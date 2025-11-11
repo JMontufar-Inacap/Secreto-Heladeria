@@ -11,10 +11,20 @@
         <button class="btn btn-outline-primary" type="submit">Buscar</button>
     </form>
 
+    {% load permisos_extras %}
     <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap">
         <div>
-            <a href="{% url 'crear_cliente' %}" class="btn btn-primary me-2">Agregar Cliente</a>
-            <a href="{% url 'exportar_clientes_excel' %}" class="btn btn-success">Exportar a Excel</a>
+            {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
+                <a href="{% url 'crear_cliente' %}" class="btn btn-primary me-2">Agregar Cliente</a>
+            {% endif %}
+
+            {% if request.user|tiene_grupo:"Admin" %}
+                <a href="{% url 'exportar_clientes_excel' %}" class="btn btn-success">Exportar a Excel</a>
+            {% endif %}
+
+            {% if request.user|tiene_grupo:"Lector" %}
+                    <p class="text-muted mb-0">Solo lectura</p>
+            {% endif %}
         </div>
 
         <form method="get" class="d-flex align-items-center mt-2 mt-sm-0">
@@ -115,8 +125,17 @@
                         <td>{{ cliente.telefono|default:"-" }}</td>
                         <td>{{ cliente.email|default:"-" }}</td>
                         <td>
-                            <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-sm btn-warning">Editar</a>
-                            <a href="{% url 'eliminar_cliente' cliente.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                            {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
+                                <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-sm btn-warning">Editar</a>
+                            {% endif %}
+
+                            {% if request.user|tiene_grupo:"Admin" %}
+                                <button class="btn btn-sm btn-danger" onclick="eliminarCliente('{{ cliente.email }}', this)">Eliminar</button>
+                            {% endif %}
+
+                            {% if request.user|tiene_grupo:"Lector" %}
+                                <p class="text-muted mb-0">—</p>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
@@ -166,4 +185,45 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function eliminarCliente(email, btn) {
+    Swal.fire({
+        title: '¿Eliminar cliente?',
+        text: `Se eliminará el cliente con email: ${email}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{% url 'eliminar_cliente' %}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(async res => {
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                    btn.closest('tr').remove();
+                    Swal.fire('Eliminado', 'El cliente ha sido eliminado.', 'success');
+                } else {
+                    console.error('Respuesta del servidor:', data);
+                    Swal.fire('Error', data.error || 'No se pudo eliminar el cliente.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error en fetch:', err);
+                Swal.fire('Error', 'Hubo un problema con la conexión.', 'error');
+            });
+        }
+    });
+}
+</script>
 {% endblock %}

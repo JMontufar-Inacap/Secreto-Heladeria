@@ -2,10 +2,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from heladeria.models import Cliente
 from django import forms
 from django.core.exceptions import ValidationError
-import re
+import re, json
 from django.contrib.auth.decorators import login_required
 import openpyxl
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
 
@@ -141,12 +141,24 @@ def editar_cliente(request, pk):
     })
 
 @login_required
-def eliminar_cliente(request, pk):
-    cliente = get_object_or_404(Cliente, pk=pk)
+def eliminar_cliente(request):
     if request.method == 'POST':
-        cliente.delete()
-        return redirect('lista_clientes')
-    return render(request, 'clientes/eliminar_cliente.html', {'cliente': cliente})
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            if not email:
+                return JsonResponse({'success': False, 'error': 'Email no proporcionado'}, status=400)
+
+            cliente = Cliente.objects.filter(email=email).first()
+            if not cliente:
+                return JsonResponse({'success': False, 'error': 'Cliente no encontrado'}, status=404)
+
+            cliente.delete()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 @login_required
 def exportar_clientes_excel(request):
