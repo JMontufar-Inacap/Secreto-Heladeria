@@ -4,6 +4,13 @@ services:
     env: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn monitoreo.wsgi:application"
+    envVars:
+      - key: RENDER
+        value: "True"
     disk:
       name: media
       mountPath: /opt/render/project/src/media
+    routes:
+      - type: rewrite
+        source: /media/(.*)
+        destination: /opt/render/project/src/media/$1
