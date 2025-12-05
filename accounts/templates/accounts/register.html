@@ -1,0 +1,80 @@
+{% extends 'heladeria/base_nologin.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+  .register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+  }
+
+  .register-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 2rem;
+    width: 100%;
+    max-width: 450px;
+  }
+
+  .register-card h3 {
+    font-weight: 700;
+    color: #212529;
+  }
+
+  .register-card .btn-primary {
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 0.6rem;
+  }
+
+  .register-card input {
+    border-radius: 6px !important;
+  }
+</style>
+
+<div class="register-container">
+  <div class="register-card">
+
+    <h3 class="mb-3 text-center">Crear cuenta</h3>
+
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        Corrige los errores antes de continuar.
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="mb-3">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+      </div>
+
+      <div class="mb-3">
+        {{ form.password1.label_tag }}
+        {{ form.password1 }}
+      </div>
+
+      <div class="mb-3">
+        {{ form.password2.label_tag }}
+        {{ form.password2 }}
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">
+        Registrarse
+      </button>
+    </form>
+
+    <div class="mt-4 text-center small">
+      <a href="{% url 'login' %}" class="text-decoration-none">¿Ya tienes cuenta? Inicia sesión</a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

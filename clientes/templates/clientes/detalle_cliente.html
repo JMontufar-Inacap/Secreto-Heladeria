@@ -1,0 +1,165 @@
+{% extends 'heladeria/base_generic.html' %}
+{% load static %}
+{% block page_title %}Cliente - {{ cliente.nombre }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'clientes/css/lista_clientes.css' %}">{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                <!-- IZQUIERDA: Nombre + ubicación -->
+                <div>
+                    <h2 class="fw-bold mb-2">{{ cliente.nombre }}</h2>
+
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-geo-alt-fill me-1"></i>
+                        {{ cliente.direccion|default:"Dirección no registrada" }}
+                    </p>
+                </div>
+
+                <div style="text-align: left;">
+                    <p class="mb-1">
+                        <i class="bi bi-person-badge-fill me-1"></i>
+                        <strong>RUT:</strong> {{ cliente.rut }}
+                    </p>
+                    <p class="mb-1">
+                        <i class="bi bi-telephone-fill me-1"></i>
+                        <strong>Teléfono:</strong> {{ cliente.telefono|default:"-" }}
+                    </p>
+
+                    <p class="mb-0">
+                        <i class="bi bi-envelope-fill me-1"></i>
+                        <strong>Email:</strong> {{ cliente.email|default:"-" }}
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CARD COMBINADO: Estadísticas + Lista de ventas -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <!-- ESTADÍSTICAS -->
+            <div class="d-flex justify-content-between text-center mb-4">
+
+                <!-- Total pedidos -->
+                <div class="flex-fill border-end pe-3">
+                    <h1 class="fw-bold">{{ total_pedidos }}</h1>
+                    <p class="text-muted mb-0">Total de pedidos realizados</p>
+                </div>
+
+                <!-- Total gastado -->
+                <div class="flex-fill ps-3">
+                    <h1 class="fw-bold">${{ total_compras }}</h1>
+                    <p class="text-muted mb-0">Total gastado por el cliente</p>
+                </div>
+
+            </div>
+
+            <!-- TÍTULO LISTA -->
+            <hr class="my-4">
+
+            <!-- TABLA DE VENTAS -->
+            {% if ventas %}
+<div class="table-container">
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for venta in ventas %}
+            <tr>
+
+                <td>#{{ venta.id }}</td>
+                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+
+                <td>
+                    {% if venta.estado == "COMPLETED" %}
+                        <span class="status-badge status-completed">
+                            <span class="status-dot"></span> Completada
+                        </span>
+                    {% elif venta.estado == "PENDING" %}
+                        <span class="status-badge status-pending">
+                            <span class="status-dot"></span> Pendiente
+                        </span>
+                    {% elif venta.estado == "CANCELLED" %}
+                        <span class="status-badge status-cancelled">
+                            <span class="status-dot"></span> Cancelada
+                        </span>
+                    {% elif venta.estado == "CART" %}
+                        <span class="status-badge status-cart">
+                            <span class="status-dot"></span> Carrito
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td>${{ venta.total }}</td>
+
+                <td>
+                    <a href="{% url 'detalle_venta' venta.id %}" class="btn-view">
+                        Ver Pedido
+                    </a>
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<p class="no-data-msg">Este cliente no tiene ventas registradas.</p>
+{% endif %}
+
+
+        </div>
+    </div>
+    
+    {% include 'clientes/graficos_cliente.html' %}
+
+    <a href="{% url 'lista_clientes' %}" class="btn btn-outline-primary">← Volver</a>
+
+</div>
+
+<!-- Gráfico -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('graficoCompras');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for v in ventas %}"{{ v.fecha|date:'d/m' }}",{% endfor %}],
+            datasets: [{
+                label: "Total $",
+                data: [{% for v in ventas %}{{ v.total }},{% endfor %}],
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+
+{% endblock %}

@@ -7,4 +7,6 @@ urlpatterns = [
     path('editar/<int:pk>/', views.editar_cliente, name='editar_cliente'),
     path('eliminar/', views.eliminar_cliente, name='eliminar_cliente'),
     path('exportar/', views.exportar_clientes_excel, name='exportar_clientes_excel'),
+    path("eliminar-multiples/", views.eliminar_clientes_multiples, name="eliminar_clientes_multiples"),
+    path('<int:cliente_id>/', views.detalle_cliente, name='detalle_cliente'),
 ]

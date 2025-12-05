@@ -1,4 +1,5 @@
 {% load static %}
+{% load permisos_extras %}
 
 <!DOCTYPE html>
 <html lang="es">
@@ -7,126 +8,287 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Secreto Heladería</title>
-  
-  <!-- Bootstrap (CDN minimal mono) -->
+
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  
+
+  {% block extra_css %}{% endblock %}
+
   <style>
-    /* --- Layout base --- */
-    html, body {
-      height: 100%;
+    /* === LAYOUT GENERAL === */
+    body {
+      background: #111827;/*#F3F4F6*/
       margin: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
     }
 
-    body {
+    /* === SIDEBAR === */
+    .sidebar {
+      width: 200px;
+      background: #111827;;
+      /*border-right: 1px solid #e6e6e6;*/
+      padding-top: 30px;
       display: flex;
       flex-direction: column;
-      min-height: 100vh; /* ocupa toda la pantalla */
+      z-index: 100;
     }
 
-    main {
-      flex: 1; /* empuja el footer al fondo */
+    .sidebar .brand {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 30px;
+      color: #F3F4F6;
     }
 
-    /* --- Footer siempre abajo --- */
-    footer {
-      margin-top: auto; /* esto lo mantiene al fondo del body */
-      width: 100%;
-    }
-
-    /* --- Estilo monocromo simple --- */
-    body {
-      background: #f8f9fa;
-      color: #222;
-    }
-
-    .card {
+    .sidebar .menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      color: #D1D5DB;
+      text-decoration: none;
       border-radius: 8px;
+      margin: 5px 10px;
+      transition: 0.2s;
+      font-size: 15px;
     }
 
-    .badge-crit {
-      background: #d9534f;
-      color: white;
+    .sidebar .menu a:hover {
+      background: #1f2937; /* hover oscuro */
+  color: #fff;
     }
 
-    .badge-high {
-      background: #f0ad4e;
-      color: white;
+    .sidebar .menu .active {
+      background: #ffffff !important; /* fondo blanco */
+      color: #111827 !important;      /* texto oscuro */
     }
 
-    .badge-medium {
-      background: #5bc0de;
-      color: white;
+
+    /* === CONTENIDO PRINCIPAL === */
+    .main-content {
+      flex-grow: 1;
+      padding: 0;
+      overflow: hidden;
     }
+
+    /* === CAJA INTERIOR REDONDEADA === */
+    .content-box {
+      padding-top: 45px;
+      background: #fff;
+      border-top-left-radius: 45px;
+      border-bottom-left-radius: 0;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+
+      padding: 30px;
+      margin-left: 15px;
+
+      height: 100vh;          /* ← necesario para que pueda scrollear */
+      overflow-y: auto;       /* ← AHORA el scroll está aquí */
+      
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+
+    /* === TOPBAR INTERIOR === */
+    .topbar-background {
+  position: fixed;
+  top: 0;
+  width: 100vw;
+  height: 45px;
+  background: #fff;
+  border-top-left-radius: 15px;
+  z-index: 49;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+  background: #fff;  
+  
+  padding-top: 5px;
+  padding-bottom: 15px;
+  margin-left: -135px; /* Compensa el margen de content-box */
+  padding-left: 45px; /* suma a padding-top/bottom */
+  padding-right: 30px;
+  margin: 0;
+
+  border-top-left-radius: 45px;
+}
+
+
+    .topbar h2 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .topbar .user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+    }
+
+    .topbar .user img {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-dropdown {
+  position: relative;
+  cursor: pointer;
+}
+
+.user-dropdown .dropdown-menu {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  padding: 10px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  width: 150px;
+
+  display: none; /* ← oculto por defecto */
+  flex-direction: column;
+  z-index: 999;
+}
+
+.user-dropdown .dropdown-menu a {
+  padding: 10px 15px;
+  display: block;
+  color: #111827;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.user-dropdown .dropdown-menu a:hover {
+  background: #f3f4f6;
+}
+
+/* Clase visible */
+.user-dropdown.show .dropdown-menu {
+  display: flex;
+}
   </style>
-
 </head>
 
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    {% load permisos_extras %}
-    <div class="container">
-      <a class="navbar-brand" href="{% url 'dashboard' %}">Secreto Heladería</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'dashboard' %}">Productos</a>
-          </li>
-          {% if request.user|tiene_grupo:"Admin" %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'reportes_ventas' %}">Reportes</a>
-          </li>
-          {% endif %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'lista_clientes' %}">Clientes</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'lista_ventas' %}">Ventas</a>
-          </li>
-        </ul>
-        <ul class="navbar-nav ms-auto">
-          {% if user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'perfil_usuario' %}">{{ user.username }}</a>
-              </a>
-            </li>
-            <li class="nav-item">
-              <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-              </form>
-            </li>
-          {% else %}
-            <li class="nav-item">
-              <a class="btn btn-outline-light btn-sm me-2" href="{% url 'login' %}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="btn btn-light btn-sm" href="{% url 'register' %}">Register</a>
-            </li>
-          {% endif %}
-        </ul>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">Secreto Heladería</div>
+
+    <nav class="menu">
+
+      <a href="{% url 'dashboard' %}" 
+         class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fa fa-chart-line"></i> Dashboard
+      </a>
+
+      {% if request.user|tiene_grupo:"Admin" %}
+      <a href="{% url 'lista_productos' %}"
+         class="{% if request.resolver_match.url_name == 'lista_productos' %}active{% endif %}">
+        <i class="fa fa-box"></i> Productos
+      </a>
+      {% endif %}
+
+      <a href="{% url 'lista_clientes' %}"
+         class="{% if request.resolver_match.url_name == 'lista_clientes' %}active{% endif %}">
+        <i class="fa fa-users"></i> Clientes
+      </a>
+
+      <a href="{% url 'lista_ventas' %}"
+         class="{% if request.resolver_match.url_name == 'lista_ventas' %}active{% endif %}">
+        <i class="fa fa-cash-register"></i> Pedidos
+      </a>
+
+      <!--{% if request.user|tiene_grupo:"Admin" %}
+      <a href="{% url 'reportes_ventas' %}"
+         class="{% if request.resolver_match.url_name == 'reportes_ventas' %}active{% endif %}">
+        <i class="fa fa-file-invoice-dollar"></i> Reportes
+      </a>
+      {% endif %}-->
+    </nav>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
+
+    <div class="content-box">
+
+      <!-- TOPBAR INTERIOR -->
+       <div class="topbar-background"></div>
+      <div class="topbar">
+        <h2>{% block page_title %}Página{% endblock %}</h2>
+
+        <div class="user user-dropdown">
+          <span class="user-name">{{ user.username }}</span>
+          <i class="fa fa-chevron-down"></i>
+          <img class="user-avatar" src="https://ui-avatars.com/api/?name={{ user.username }}&background=random">
+
+          <!-- DROPDOWN -->
+          <div class="dropdown-menu">
+            <a href="{% url 'perfil_usuario' %}"><i class="fa fa-user"></i> Mi Perfil</a>
+            <form action="{% url 'logout' %}" method="post" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" style="
+                width: 100%; 
+                text-align: left; 
+                background: none; 
+                border: none; 
+                padding: 10px 15px;
+                font-size: 14px;
+                cursor: pointer;">
+                <i class="fa fa-sign-out-alt"></i> Cerrar sesión
+            </button>
+          </form>
+
+          </div>
+        </div>
+
       </div>
+
+      <!-- CONTENIDO VARIABLE -->
+      {% block content %}{% endblock %}
+
     </div>
-  </nav>
 
-  <!-- Main Content -->
-  <main class="container my-4">
-    {% block content %}{% endblock %}
-  </main>
+  </div>
 
-  <!-- Footer -->
-  <footer class="bg-dark text-white py-3 mt-5">
-    <div class="container d-flex justify-content-between">
-      <div>© {{ now.year }} Secreto Heladería</div>
-      <div><a class="text-white" href="#">Soporte</a></div>
-    </div>
-  </footer>
+  <script>
+document.addEventListener("DOMContentLoaded", function () {
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    const userDropdown = document.querySelector(".user-dropdown");
+
+    userDropdown.addEventListener("click", function (e) {
+        e.stopPropagation();
+        this.classList.toggle("show");
+    });
+
+    // Cerrar cuando se hace click afuera
+    document.addEventListener("click", function () {
+        userDropdown.classList.remove("show");
+    });
+
+});
+</script>
+
 </body>
-
 </html>

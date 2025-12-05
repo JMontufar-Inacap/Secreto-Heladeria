@@ -1,0 +1,172 @@
+{% load static %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .chart-card {
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        background: white;
+        margin-bottom: 20px;
+    }
+    .chart-title {
+        font-weight: 600;
+        font-size: 17px;
+        margin-bottom: 10px;
+    }
+    .chart-wrapper {
+        height: 220px !important;
+    }
+    .chart-small-pie {
+        width: 160px !important;
+        height: 160px !important;
+    }
+    .legend-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px 12px;
+        width: 100%;
+    }
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+    }
+</style>
+
+<div class="row">
+
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Unidades Vendidas por Mes</div>
+            <canvas id="chartMeses" class="chart-wrapper"></canvas>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Ingresos Mensuales</div>
+            <canvas id="chartIngresos" class="chart-wrapper"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Top Clientes</div>
+            <div class="d-flex align-items-center">
+                <canvas id="chartClientes" class="chart-small-pie me-3"></canvas>
+                <div id="clientesLegend" class="legend-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Evolución de Ventas</div>
+            <canvas id="chartEvolucion" class="chart-wrapper"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const mesesLabels = {{ meses_labels|safe }};
+    const ventasMes = {{ ventas_mes|safe }};
+    const ingresosMes = {{ ingresos_mes|safe }};
+    const topClientesLabels = {{ top_clientes_labels|safe }};
+    const topClientesCant = {{ top_clientes_cant|safe }};
+
+    // Unidades vendidas por mes
+    new Chart(document.getElementById("chartMeses"), {
+        type: "bar",
+        data: {
+            labels: mesesLabels,
+            datasets: [{
+                data: ventasMes,
+                borderWidth: 1,
+                backgroundColor: "rgba(54, 162, 235, 0.5)",
+                borderColor: "rgb(54, 162, 235)"
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true }},
+            plugins: { legend: { display: false }}
+        }
+    });
+
+    // Ingresos
+    new Chart(document.getElementById("chartIngresos"), {
+        type: "line",
+        data: {
+            labels: mesesLabels,
+            datasets: [{
+                data: ingresosMes,
+                fill: true,
+                borderColor: "rgb(75, 192, 192)",
+                backgroundColor: "rgba(75, 192, 192, 0.3)",
+                tension: 0.3
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true }},
+            plugins: { legend: { display: false }}
+        }
+    });
+
+    // Top clientes
+    const pieChart = new Chart(document.getElementById("chartClientes"), {
+        type: "doughnut",
+        data: {
+            labels: topClientesLabels,
+            datasets: [{
+                data: topClientesCant
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false }}
+        }
+    });
+
+    // Leyenda pie
+    const legendBox = document.getElementById("clientesLegend");
+    const totalClientes = topClientesCant.reduce((a, b) => a + b, 0);
+
+    pieChart.data.labels.forEach((lab, i) => {
+        const count = topClientesCant[i];
+        const percent = totalClientes ? ((count / totalClientes) * 100).toFixed(1) : 0;
+        const color = pieChart.data.datasets[0].backgroundColor?.[i] || "#000";
+
+        legendBox.innerHTML += `
+            <div class="legend-item">
+                <div>
+                    <span class="legend-color" style="background:${color}"></span>
+                    ${lab}
+                </div>
+                <div><strong>${count}</strong> (${percent}%)</div>
+            </div>
+        `;
+    });
+
+    // Evolución día a día
+    new Chart(document.getElementById("chartEvolucion"), {
+        type: "line",
+        data: {
+            labels: mesesLabels,
+            datasets: [{
+                data: ventasMes,
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false }},
+            scales: { y: { beginAtZero: true }}
+        }
+    });
+</script>

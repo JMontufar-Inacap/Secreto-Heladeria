@@ -145,7 +145,7 @@ def confirmar_venta(request):
                 except Producto.DoesNotExist:
                     continue  
 
-            messages.success(request, f"Venta confirmada correctamente para {cliente.nombre if cliente else 'sin cliente'}.")
+            
             return redirect("dashboard")
 
         except Exception as e:

@@ -1,21 +1,45 @@
 {% extends 'heladeria/base_generic.html' %}
+{% block page_title %}Detalle de Venta #{{ venta.id }}{% endblock %}
 {% block content %}
+
 <div class="container mt-4">
-  <h3>Detalle de Venta #{{ venta.id }}</h3>
+
+
   <p><strong>Cliente:</strong> {{ venta.cliente.nombre|default:"-" }}</p>
   <p><strong>Usuario:</strong> {{ venta.usuario.username }}</p>
   <p><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
-  <p><strong>Estado:</strong>
-    {% if venta.estado == 'PENDING' %}
-      <span class="badge bg-warning text-dark">Pendiente</span>
-    {% else %}
-      <span class="badge bg-success">Completada</span>
+
+  <p><strong>Estado Actual:</strong>
+    {% if venta.estado == 'COMPLETED' %}
+        <span class="badge bg-success">Completada</span>
+    {% elif venta.estado == 'PENDING' %}
+        <span class="badge bg-warning text-dark">Pendiente</span>
+    {% elif venta.estado == 'CANCELLED' %}
+        <span class="badge bg-danger">Cancelada</span>
+    {% elif venta.estado == 'CART' %}
+        <span class="badge bg-secondary">Carrito</span>
     {% endif %}
   </p>
+
+  <!-- FORMULARIO PARA CAMBIAR ESTADO -->
+  <form action="{% url 'cambiar_estado' venta.id %}" method="POST" class="mb-3">
+      {% csrf_token %}
+      <label for="estado" class="form-label fw-bold">Cambiar estado:</label>
+      <div class="input-group" style="max-width: 300px;">
+          <select name="estado" id="estado" class="form-select">
+              <option value="PENDING"   {% if venta.estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
+              <option value="COMPLETED" {% if venta.estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
+              <option value="CANCELLED" {% if venta.estado == 'CANCELLED' %}selected{% endif %}>Cancelada</option>
+              <option value="CART"      {% if venta.estado == 'CART' %}selected{% endif %}>Carrito</option>
+          </select>
+          <button class="btn btn-primary" type="submit">Actualizar</button>
+      </div>
+  </form>
 
   <hr>
 
   <h5>Productos</h5>
+
   <table class="table">
     <thead>
       <tr>
@@ -42,5 +66,7 @@
   </table>
 
   <a href="{% url 'lista_ventas' %}" class="btn btn-outline-primary mt-3">Volver</a>
+
 </div>
+
 {% endblock %}

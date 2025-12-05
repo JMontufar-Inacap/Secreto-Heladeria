@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-unsafe")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://secreto-heladeria.onrender.com']
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'clientes',
     'accounts',
     'ventas',
+    'productos',
 ]
 
 MIDDLEWARE = [
@@ -141,7 +142,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 

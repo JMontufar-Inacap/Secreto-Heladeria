@@ -1,0 +1,149 @@
+{% extends 'heladeria/base_generic.html' %}
+{% load static %}
+{% block page_title %}Producto - {{ producto.nombre }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'productos/css/lista_productos.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CARD PRINCIPAL -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                <!-- IZQUIERDA: Nombre + categoría -->
+                <div>
+                    <h2 class="fw-bold mb-2">{{ producto.nombre }}</h2>
+
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-tag-fill me-1"></i>
+                        Categoría: {{ producto.categoria|default:"Sin categoría" }}
+                    </p>
+
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-currency-dollar me-1"></i>
+                        Precio: <strong>${{ producto.precio }}</strong>
+                    </p>
+                </div>
+
+                <!-- DERECHA -->
+                <div style="text-align: left;">
+                    <p class="mb-1">
+                        <i class="bi bi-box-seam me-1"></i>
+                        <strong>Stock:</strong> {{ producto.stock }}
+                    </p>
+
+                    <p class="mb-0">
+                        <i class="bi bi-card-text me-1"></i>
+                        <strong>Descripción:</strong> {{ producto.descripcion|default:"-" }}
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CARD ESTADÍSTICAS + LISTA DE VENTAS -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <!-- ESTADÍSTICAS -->
+            <div class="d-flex justify-content-between text-center mb-4">
+
+                <!-- Total vendido -->
+                <div class="flex-fill border-end pe-3">
+                    <h1 class="fw-bold">{{ total_vendido }}</h1>
+                    <p class="text-muted mb-0">Unidades vendidas</p>
+                </div>
+
+                <!-- Total generado -->
+                <div class="flex-fill ps-3">
+                    <h1 class="fw-bold">${{ total_ganado }}</h1>
+                    <p class="text-muted mb-0">Ingresos generados</p>
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <!-- TABLA DE VENTAS -->
+            {% if ventas %}
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Fecha</th>
+                            <th>Cantidad</th>
+                            <th>Total línea</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in ventas %}
+                        <tr>
+                            <td>#{{ item.venta.id }}</td>
+                            <td>{{ item.venta.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>{{ item.cantidad }}</td>
+                            <td>${{ item.subtotal }}</td>
+                            <td>
+                                <a href="{% url 'detalle_venta' item.venta.id %}" class="btn-view">
+                                    Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% else %}
+                <p class="no-data-msg">Este producto no ha sido vendido aún.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- GRÁFICO -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Historial de ventas</h5>
+            <canvas id="graficoProducto"></canvas>
+        </div>
+    </div>
+
+    <a href="{% url 'lista_productos' %}" class="btn btn-outline-primary">← Volver</a>
+
+</div>
+
+<script>
+    const ctx = document.getElementById('graficoProducto');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for p in ventas %}"{{ p.venta.fecha|date:'d/m' }}",{% endfor %}],
+            datasets: [{
+                label: "Cantidad",
+                data: [{% for p in ventas %}{{ p.cantidad }},{% endfor %}],
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+
+{% endblock %}

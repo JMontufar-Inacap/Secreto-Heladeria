@@ -1,0 +1,190 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .chart-card {
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        background: white;
+        margin-bottom: 20px;
+    }
+    .chart-title {
+        font-weight: 600;
+        font-size: 17px;
+        margin-bottom: 10px;
+    }
+    .chart-wrapper {
+        height: 220px !important;
+    }
+    .chart-small-pie {
+        width: 160px !important;
+        height: 160px !important;
+    }
+
+    .legend-grid {
+        display: grid;
+        grid-template-columns: 1fr auto; /* nombre | numero */
+        gap: 6px 12px;
+        width: 100%;
+    }
+    .legend-item {
+        display: contents; /* permite alinear como filas reales */
+    }
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 6px;
+    }
+</style>
+
+
+<div class="row">
+
+    <!-- PROMEDIO DE ORDEN -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Valor promedio por orden</div>
+            <h3 class="fw-bold mb-3">${{ avg_order_value }}</h3>
+
+            <canvas id="chartAvgOrder" class="chart-wrapper"></canvas>
+        </div>
+    </div>
+
+    <!-- TOTAL GASTADO POR MES -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Gasto total mensual</div>
+            <h3 class="fw-bold mb-3">${{ total_compras }}</h3>
+
+            <canvas id="chartTotalMonth" class="chart-wrapper"></canvas>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="row">
+
+    <!-- PRODUCTOS MÁS COMPRADOS -->
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title">Productos más comprados</div>
+
+            <div class="d-flex align-items-center">
+                <canvas id="chartProducts" class="chart-small-pie me-3"></canvas>
+
+                <div id="productLegend" class="legend-grid"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    let monthlyLabels = {{ monthly_labels|safe }};
+    let avgSpend = {{ monthly_avg_spend|safe }};
+    let totalSpend = {{ monthly_total_spend|safe }};
+    const productLabels = {{ product_labels|safe }};
+    const productCounts = {{ product_counts|safe }};
+
+    // ------------------------------------------
+    // 🔥 ORDENAR LABELS Y DATOS AÑO-MES ASCENDENTE
+    // ------------------------------------------
+    let combined = monthlyLabels.map((label, i) => ({
+        label: label,
+        avg: avgSpend[i],
+        total: totalSpend[i]
+    }));
+
+    // Ordenar por texto "2025-09" < "2025-10" < "2025-11"
+    combined.sort((a, b) => a.label.localeCompare(b.label));
+
+    // Reasignar los arreglos ya ordenados
+    monthlyLabels = combined.map(i => i.label);
+    avgSpend = combined.map(i => i.avg);
+    totalSpend = combined.map(i => i.total);
+
+
+    // -----------------------------
+    // PROMEDIO DE ORDEN - BARRAS
+    // -----------------------------
+    new Chart(document.getElementById("chartAvgOrder"), {
+        type: "bar",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                data: avgSpend,
+                borderWidth: 1,
+                backgroundColor: "rgba(255, 159, 64, 0.5)",
+                borderColor: "rgb(255, 159, 64)"
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // -----------------------------
+    // TOTAL MENSUAL - LÍNEA
+    // -----------------------------
+    new Chart(document.getElementById("chartTotalMonth"), {
+        type: "line",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                data: totalSpend,
+                borderWidth: 2,
+                borderColor: "rgb(75, 192, 192)",
+                backgroundColor: "rgba(75, 192, 192, 0.3)",
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // -----------------------------
+    // PRODUCTOS - PIE
+    // -----------------------------
+    const pieChart = new Chart(document.getElementById("chartProducts"), {
+        type: "doughnut",
+        data: {
+            labels: productLabels,
+            datasets: [{
+                data: productCounts,
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const legendBox = document.getElementById("productLegend");
+    const total = productCounts.reduce((a, b) => a + b, 0);
+
+    productLabels.forEach((lab, i) => {
+        const count = productCounts[i];
+        const percent = total ? ((count / total) * 100).toFixed(1) : 0;
+
+        const color = pieChart.data.datasets[0].backgroundColor[i];
+
+        legendBox.innerHTML += `
+            <div class="legend-item">
+                <div>
+                    <span class="legend-color" style="background:${color}"></span>
+                    ${lab}
+                </div>
+                <div><strong>${count}</strong> (${percent}%)</div>
+            </div>
+        `;
+    });
+</script>

@@ -1,4 +1,4 @@
-{% extends 'heladeria/base_generic.html' %}
+{% extends 'heladeria/base_nologin.html' %}
 {% load static %}
 {% block content %}
 
@@ -45,9 +45,19 @@
     <h3 class="mb-2">Secreto Heladería</h3>
     <p class="mb-4">Inicia sesión para continuar</p>
 
-    {% if form.non_field_errors %}
-      <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+    {% if messages %}
+    <script>
+        {% for message in messages %}
+            Swal.fire({
+                icon: "{{ message.tags|default:'info' }}",
+                title: "{{ message }}",
+                confirmButtonColor: "#3085d6",
+            });
+        {% endfor %}
+    </script>
     {% endif %}
+
+
 
     <form method="post" novalidate>
       {% csrf_token %}

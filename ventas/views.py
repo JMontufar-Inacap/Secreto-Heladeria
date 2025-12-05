@@ -59,7 +59,10 @@ def lista_ventas(request):
         'next_direction': next_direction,
         'per_page': per_page,
         'rangos_pagina': rangos_pagina,
-        'total_ventas': paginator.count,
+        "total_ventas": Venta.objects.count(),
+        "ventas_completadas": Venta.objects.filter(estado="COMPLETED").count(),
+        "ventas_pendientes": Venta.objects.filter(estado="PENDING").count(),
+        "ventas_canceladas": Venta.objects.filter(estado="CANCELLED").count(),
     })
 
 
@@ -71,21 +74,6 @@ def detalle_venta(request, venta_id):
         'venta': venta,
         'detalles': detalles
     })
-
-@csrf_exempt
-@login_required
-def cambiar_estado_venta(request, venta_id):
-    if request.method == 'POST':
-        venta = get_object_or_404(Venta, id=venta_id)
-        nuevo_estado = "COMPLETED" if venta.estado == "PENDING" else "PENDING"
-        venta.estado = nuevo_estado
-        venta.save()
-        return JsonResponse({
-            'success': True,
-            'nuevo_estado': venta.estado,
-            'estado_legible': venta.get_estado_display()
-        })
-    return JsonResponse({'success': False})
 
 @csrf_exempt
 @login_required
@@ -113,7 +101,7 @@ def cambiar_estado_multiples(request):
         data = json.loads(request.body)
         ids = data.get('ids', [])
         nuevo_estado = data.get('nuevo_estado')
-        if nuevo_estado not in ['PENDING', 'COMPLETED']:
+        if nuevo_estado not in ['PENDING', 'COMPLETED', 'CANCELLED']:
             return JsonResponse({'success': False, 'error': 'Estado inválido'})
         Venta.objects.filter(id__in=ids).update(estado=nuevo_estado)
         return JsonResponse({'success': True})
@@ -148,3 +136,20 @@ def exportar_ventas_excel(request):
     response["Content-Disposition"] = 'attachment; filename="ventas.xlsx"'
     wb.save(response)
     return response
+
+@csrf_exempt
+@login_required
+def cambiar_estado(request, venta_id):
+    if request.method == 'POST':
+        venta = get_object_or_404(Venta, id=venta_id)
+        nuevo_estado = request.POST.get('estado')
+
+        if nuevo_estado not in ['PENDING', 'COMPLETED', 'CANCELLED', 'CART']:
+            return redirect('detalle_venta', venta_id=venta.id)
+
+        venta.estado = nuevo_estado
+        venta.save()
+
+        return redirect('detalle_venta', venta_id=venta.id)
+    
+    return redirect('detalle_venta', venta_id=venta_id)

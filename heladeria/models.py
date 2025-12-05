@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class BaseModel(models.Model):
     STATE_CHOICES = [
@@ -38,7 +39,7 @@ class Venta(models.Model):
         choices=[('CART', 'En carrito'), ('PENDING', 'Pendiente'), ('COMPLETED', 'Completada'),  ('CANCELLED', 'Cancelada'),],
         default='PENDING'
     )
-    fecha = models.DateTimeField(auto_now_add=True)
+    fecha = models.DateTimeField(default=timezone.now)
 
     def total(self):
         return sum(detalle.subtotal() for detalle in self.detalleventa_set.all())
@@ -65,6 +66,7 @@ class DetalleVenta(models.Model):
         db_table = 'devices_detalleventa'
 
 class Cliente(models.Model):
+    rut = models.CharField(max_length=12, unique=True, null=False)
     nombre = models.CharField(max_length=100)
     direccion = models.CharField(max_length=255, null=True)
     telefono = models.CharField(max_length=20, null=True)

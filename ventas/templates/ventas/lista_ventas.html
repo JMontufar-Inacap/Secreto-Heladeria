@@ -1,269 +1,324 @@
-{% extends 'heladeria/base_generic.html' %}
-{% load static %}
-
+{% extends "heladeria/base_generic.html" %}
+{% load static %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'ventas/css/lista_ventas.css' %}">
+{% endblock %}
+{% block page_title %}Pedidos{% endblock %}
 {% block content %}
-<div class="container mt-4">
-
-    <h2 class="mb-3 text-center">Gestión de Ventas</h2>
-
-    <form method="get" class="mb-3 d-flex" role="search">
-        <input type="text" name="q" class="form-control me-2" placeholder="Buscar por cliente o usuario..." value="{{ query }}">
-        <button class="btn btn-outline-primary" type="submit">Buscar</button>
-    </form>
-
-    {% load permisos_extras %}
-
-        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap">
-            <div class="d-flex flex-wrap align-items-center">
-                {% if request.user|tiene_grupo:"Admin" %}
-                    <a href="{% url 'ventas:exportar_ventas_excel' %}" class="btn btn-success me-2">Exportar a Excel</a>
-                    <button class="btn btn-danger me-2" onclick="eliminarSeleccionadas()">Eliminar seleccionadas</button>
-                {% endif %}
-
-                {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
-                    <button class="btn btn-secondary me-3" onclick="cambiarEstadoSeleccionadas()">Cambiar estado</button>
-                {% endif %}
-
-                {% if request.user|tiene_grupo:"Lector" %}
-                    <p class="text-muted mb-0">Solo lectura</p>
-                {% endif %}
-            </div>
-        
-
-        <form method="get" class="d-flex align-items-center mt-2 mt-sm-0">
-            {% if query %}
+<div class="sales-container">
+    
+    <!-- TABS HEADER -->
+    <div class="sales-header">
+        <div class="sales-tabs">
+            <!-- Todas -->
+            <form method="get" style="display:inline">
                 <input type="hidden" name="q" value="{{ query }}">
-            {% endif %}
-            {% if sort %}
+                <input type="hidden" name="per_page" value="{{ per_page }}">
                 <input type="hidden" name="sort" value="{{ sort }}">
                 <input type="hidden" name="direction" value="{{ direction }}">
-            {% endif %}
+                <button type="submit" name="estado" value="" class="tab-item {% if not estado %}active{% endif %}">
+                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    Todos
+                    <span class="tab-count">{{ total_ventas|default:0 }}</span>
+                </button>
+            </form>
 
-            <label for="estado" class="me-2 mb-0 text-secondary">Estado:</label>
-            <select name="estado" id="estado" class="form-select form-select-sm me-3" style="width: auto;" onchange="this.form.submit()">
-                <option value="">Todos</option>
-                <option value="PENDING" {% if estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
-                <option value="COMPLETED" {% if estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
-            </select>
+            <!-- Completadas -->
+            <form method="get" style="display:inline">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="per_page" value="{{ per_page }}">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+                <button type="submit" name="estado" value="COMPLETED" class="tab-item {% if estado == 'COMPLETED' %}active{% endif %}">
+                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Completadas
+                    <span class="tab-count">{{ ventas_completadas|default:0 }}</span>
+                </button>
+            </form>
 
-            <label for="per_page" class="me-2 mb-0 text-secondary">Mostrar:</label>
-            <select name="per_page" id="per_page" class="form-select form-select-sm me-2" style="width: auto;" onchange="this.form.submit()">
-                <option value="5" {% if request.GET.per_page == '5' %}selected{% endif %}>5</option>
-                <option value="10" {% if request.GET.per_page == '10' or not request.GET.per_page %}selected{% endif %}>10</option>
-                <option value="20" {% if request.GET.per_page == '20' %}selected{% endif %}>20</option>
-            </select>
-            <span class="text-secondary">por página</span>
-        </form>
+            <!-- Pendientes -->
+            <form method="get" style="display:inline">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="per_page" value="{{ per_page }}">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+                <button type="submit" name="estado" value="PENDING" class="tab-item {% if estado == 'PENDING' %}active{% endif %}">
+                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Pendientes
+                    <span class="tab-count">{{ ventas_pendientes|default:0 }}</span>
+                </button>
+            </form>
+
+            <!-- Canceladas -->
+            <form method="get" style="display:inline">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="per_page" value="{{ per_page }}">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+                <button type="submit" name="estado" value="CANCELLED" class="tab-item {% if estado == 'CANCELLED' %}active{% endif %}">
+                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Canceladas
+                    <span class="tab-count">{{ ventas_canceladas|default:0 }}</span>
+                </button>
+            </form>
+        </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-secondary text-white">
-            <strong>Ventas Registradas</strong>
-        </div>
-        <div class="card-body p-0">
-            <table class="table table-striped mb-0 text-center align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
-                        <th>
-                            <a href="?sort=id&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
-                                ID
-                                {% if sort == 'id' %}
-                                    {% if direction == 'asc' %}
-                                        <i class="fa-solid fa-arrow-up ms-1"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-arrow-down ms-1"></i>
-                                    {% endif %}
-                                {% else %}
-                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                                {% endif %}
-                            </a>
-                        </th>
+    <!-- BÚSQUEDA, FILTROS Y ACCIONES -->
+    <div class="controls-row">
+        <!-- Búsqueda y filtros -->
+        <div class="search-filter-section">
+            <form method="get" id="searchForm" class="search-box">
+                <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" name="q" class="search-input" placeholder="Buscar por cliente o usuario..." value="{{ query|default:'' }}">
+                <input type="hidden" name="estado" value="{{ estado }}">
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+            </form>
+            
+            <select name="per_page" form="searchForm" id="perPageSelect" class="filter-select" onchange="document.getElementById('searchForm').submit()">
+                <option value="5" {% if per_page == 5 %}selected{% endif %}>5 por página</option>
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10 por página</option>
+                <option value="25" {% if per_page == 25 %}selected{% endif %}>25 por página</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50 por página</option>
+            </select>
 
-                        <th>
-                            <a href="?sort=usuario__username&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
-                                Usuario
-                                {% if sort == 'usuario__username' %}
-                                    {% if direction == 'asc' %}
-                                        <i class="fa-solid fa-arrow-up ms-1"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-arrow-down ms-1"></i>
-                                    {% endif %}
-                                {% else %}
-                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                                {% endif %}
-                            </a>
-                        </th>
-
-                        <th>
-                            <a href="?sort=cliente__nombre&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
-                                Cliente
-                                {% if sort == 'cliente__nombre' %}
-                                    {% if direction == 'asc' %}
-                                        <i class="fa-solid fa-arrow-up ms-1"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-arrow-down ms-1"></i>
-                                    {% endif %}
-                                {% else %}
-                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                                {% endif %}
-                            </a>
-                        </th>
-
-                        <th>
-                            <a href="?sort=fecha&direction={{ next_direction }}{% if query %}&q={{ query }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" class="text-light text-decoration-none">
-                                Fecha
-                                {% if sort == 'fecha' %}
-                                    {% if direction == 'asc' %}
-                                        <i class="fa-solid fa-arrow-up ms-1"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-arrow-down ms-1"></i>
-                                    {% endif %}
-                                {% else %}
-                                    <i class="fa-solid fa-up-down text-secondary ms-1"></i>
-                                {% endif %}
-                            </a>
-                        </th>
-
-                        <th>Estado</th>
-                        <th>Total</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for venta in page_obj %}
-                    <tr id="venta-{{ venta.id }}">
-                        <td><input type="checkbox" class="venta-checkbox" value="{{ venta.id }}"></td>
-                        <td>{{ venta.id }}</td>
-                        <td>{{ venta.usuario.username }}</td>
-                        <td>{{ venta.cliente.nombre|default:"-" }}</td>
-                        <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-                        <td>
-                            <span class="badge {% if venta.estado == 'COMPLETED' %}bg-success{% else %}bg-warning{% endif %}">
-                                {{ venta.get_estado_display }}
-                            </span>
-                        </td>
-                        <td>${{ venta.total_calc|floatformat:0 }}</td>
-                        <td>
-                            <a href="{% url 'ventas:detalle_venta' venta.id %}" class="btn btn-sm btn-info">Ver</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="8" class="text-center text-muted">No hay ventas registradas.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
 
-        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap">
-            <div class="mb-2 mb-sm-0">
-                Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} ventas
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+            {% load permisos_extras %}
+                        
+            {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
+                <button class="btn-action btn-primary-action" onclick="cambiarEstadoSeleccionadas()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Cambiar Estado
+                </button>
+            {% endif %}
+            
+            {% if request.user|tiene_grupo:"Admin" %}
+                <button class="btn-action btn-secondary-action" onclick="window.location='{% url 'exportar_ventas_excel' %}'">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Exportar Excel
+                </button>
+            {% endif %}
+
+            {% if request.user|tiene_grupo:"Admin" %}
+                <button class="btn-action btn-danger-action" onclick="eliminarSeleccionadas()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Eliminar
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TABLA -->
+    <div class="table-container">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" class="custom-checkbox" id="selectAll" onclick="toggleAll(this)">
+                    </th>
+                    <th>ID Orden</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Fecha Creación</th>
+                    <th>Última Actualización</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in page_obj %}
+                <tr id="venta-{{ venta.id }}" class="table-row">
+                    <td>
+                        <input type="checkbox" class="custom-checkbox venta-checkbox" value="{{ venta.id }}">
+                    </td>
+                    <td style="font-weight: 600;">#SO-{{ venta.id|stringformat:"05d" }}</td>
+                    <td>{{ venta.cliente.nombre|default:venta.cliente }}</td>
+                    <td>
+                        <span class="status-badge 
+                            {% if venta.estado == 'COMPLETED' %}status-completed
+                            {% elif venta.estado == 'PENDING' %}status-pending
+                            {% elif venta.estado == 'CANCELLED' %}status-cancelled
+                            {% else %}status-cart
+                            {% endif %}">
+                            <span class="status-dot"></span>
+                            {{ venta.get_estado_display }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 600;">${{ venta.total|floatformat:0 }}</td>
+                    <td>{{ venta.fecha|date:"M d, Y" }}</td>
+                    <td>{{ venta.fecha|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'detalle_venta' venta.id %}" class="btn-view">
+                            Ver detalles
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: #9CA3AF;">
+                        No hay ventas registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- FOOTER CON PAGINACIÓN -->
+        <div class="table-footer">
+            <div class="results-per-page">
+                <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
             </div>
-            {% if page_obj.has_other_pages %}
-            <nav aria-label="Paginación de ventas">
-                <ul class="pagination mb-0">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page=1&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">« Primero</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">‹ Anterior</a>
-                    </li>
-                    {% endif %}
 
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">{{ num }}</a>
-                            </li>
+            <div class="pagination">
+                <form method="get" style="display:flex; gap:0.5rem; align-items:center;">
+                    {% for k,v in request.GET.items %}
+                        {% if k != 'page' %}
+                            <input type="hidden" name="{{ k }}" value="{{ v|escape }}">
                         {% endif %}
                     {% endfor %}
 
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">Siguiente ›</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort }}&direction={{ direction }}&estado={{ estado }}&q={{ query }}&per_page={{ per_page }}">Último »</a>
-                    </li>
+                    <button type="submit" name="page" value="1" class="pagination-btn" {% if not page_obj.has_previous %}disabled{% endif %}>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                        </svg>
+                    </button>
+
+                    {% if page_obj.has_previous %}
+                        <button type="submit" name="page" value="{{ page_obj.previous_page_number }}" class="pagination-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                    {% else %}
+                        <button type="button" class="pagination-btn" disabled>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
                     {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
+
+                    <span class="pagination-info">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <button type="submit" name="page" value="{{ page_obj.next_page_number }}" class="pagination-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    {% else %}
+                        <button type="button" class="pagination-btn" disabled>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    {% endif %}
+
+                    <button type="submit" name="page" value="{{ page_obj.paginator.num_pages }}" class="pagination-btn" {% if not page_obj.has_next %}disabled{% endif %}>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
+    <div style="height: 20px; border-bottom-left-radius: 45px; background:#fff;"></div>
 </div>
 
 
+<!-- light JS for UX (select all, get selected, submit actions) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-function toggleAll(source) {
-    document.querySelectorAll('.venta-checkbox').forEach(cb => cb.checked = source.checked);
+function toggleAll(src){
+  document.querySelectorAll('.venta-checkbox').forEach(cb => {
+    if (cb.closest('tr').style.display !== 'none') cb.checked = src.checked;
+  });
 }
 
-function getSeleccionadas() {
-    return Array.from(document.querySelectorAll('.venta-checkbox:checked')).map(cb => cb.value);
+function getSeleccionadas(){
+  return Array.from(document.querySelectorAll('.venta-checkbox:checked')).map(cb => cb.value);
 }
 
-function eliminarSeleccionadas() {
-    const seleccionadas = getSeleccionadas();
-    if (seleccionadas.length === 0) return Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
+/* eliminar seleccionadas (POST via fetch) */
+function eliminarSeleccionadas(){
+  const ids = getSeleccionadas();
+  if (!ids.length) return Swal.fire('Nada seleccionado','Selecciona al menos una venta.','info');
 
-    Swal.fire({
-        title: '¿Eliminar ventas seleccionadas?',
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'Sí, eliminar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`{% url 'ventas:eliminar_multiples' %}`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: seleccionadas })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    seleccionadas.forEach(id => document.getElementById(`venta-${id}`).remove());
-                    Swal.fire('Eliminadas', 'Las ventas seleccionadas fueron eliminadas.', 'success');
-                } else Swal.fire('Error', 'No se pudieron eliminar.', 'error');
-            });
-        }
-    });
+  Swal.fire({
+    title: '¿Eliminar ventas seleccionadas?',
+    text: `Se eliminarán ${ids.length} venta(s).`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    confirmButtonColor: '#ef4444'
+  }).then(res => {
+    if (!res.isConfirmed) return;
+    fetch("{% url 'eliminar_multiples' %}", {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({ids: ids})
+    }).then(r=>r.json()).then(data=>{
+      if (data.success){
+        ids.forEach(id => { const tr = document.getElementById('venta-'+id); if (tr) tr.remove(); });
+        Swal.fire('Eliminadas','Las ventas seleccionadas fueron eliminadas.','success');
+      } else Swal.fire('Error','No se pudieron eliminar.','error');
+    }).catch(()=>Swal.fire('Error','Problema de conexión.','error'));
+  });
 }
 
-function cambiarEstadoSeleccionadas() {
-    const seleccionadas = getSeleccionadas();
-    if (seleccionadas.length === 0) return Swal.fire('Nada seleccionado', 'Selecciona al menos una venta.', 'info');
+/* cambiar estado masivo */
+function cambiarEstadoSeleccionadas(){
+  const ids = getSeleccionadas();
+  if (!ids.length) return Swal.fire('Nada seleccionado','Selecciona al menos una venta.','info');
 
-    Swal.fire({
-        title: 'Selecciona el nuevo estado',
-        input: 'select',
-        inputOptions: { 'PENDING': 'Pendiente', 'COMPLETED': 'Completada' },
-        inputPlaceholder: 'Elegir estado',
-        showCancelButton: true,
-        confirmButtonText: 'Cambiar'
-    }).then((result) => {
-        if (result.isConfirmed && result.value) {
-            fetch(`{% url 'ventas:cambiar_estado_multiples' %}`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: seleccionadas, nuevo_estado: result.value })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Actualizadas', 'El estado de las ventas ha sido cambiado.', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else Swal.fire('Error', 'No se pudieron actualizar.', 'error');
-            });
-        }
-    });
+  Swal.fire({
+    title:'Selecciona nuevo estado',
+    input:'select',
+    inputOptions: { 'PENDING':'Pendiente','COMPLETED':'Completada','CANCELLED':'Cancelada' },
+    showCancelButton:true
+  }).then(choice=>{
+    if (!choice.isConfirmed || !choice.value) return;
+    fetch("{% url 'cambiar_estado_multiples' %}", {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({ids: ids, nuevo_estado: choice.value})
+    }).then(r=>r.json()).then(data=>{
+      if (data.success){ Swal.fire('Actualizadas','Estados modificados.','success').then(()=> location.reload()); }
+      else Swal.fire('Error','No se pudo cambiar.','error');
+    }).catch(()=>Swal.fire('Error','Problema de conexión.','error'));
+  });
 }
+
+/* submit search when Enter pressed inside search input */
+document.querySelectorAll('.search-box input[name="q"]').forEach(el=>{
+  el.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this.form.submit();
+    }
+  });
+});
 </script>
+
 {% endblock %}
