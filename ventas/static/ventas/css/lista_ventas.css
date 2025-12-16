@@ -150,6 +150,24 @@
     margin-left: auto;
 }
 
+a {
+      text-decoration: none;
+    }
+
+a.btn-action,
+a.btn-action:hover,
+a.btn-action:focus,
+a.btn-action:active {
+    text-decoration: none;
+}
+
+.table-container a,
+.table-container a:visited,
+.table-container a:hover,
+.table-container a:active {
+    text-decoration: none;
+}
+
 .btn-action {
     padding: 0.625rem 1.25rem;
     border-radius: 8px;
@@ -161,6 +179,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    text-decoration: none !important;
 }
 
 .btn-primary-action {

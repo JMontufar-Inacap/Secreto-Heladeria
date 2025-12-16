@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Eliminar Cliente</h2>
 
-<p>¿Seguro que deseas eliminar al cliente <strong>{{ cliente.nombre }}</strong>?</p>
+<p>¿Seguro que deseas eliminar al cliente <strong>{{ cliente.nombre_completo }}</strong>?</p>
 
 <form method="post">
     {% csrf_token %}

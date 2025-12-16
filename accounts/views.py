@@ -7,6 +7,7 @@ from django.contrib import messages
 from .forms import PerfilUsuarioForm, UserForm, CambiarPasswordForm
 from django.contrib.auth import update_session_auth_hash
 from .forms import LoginForm
+from django.urls import reverse_lazy
 
 def register(request):
     if request.method == "POST":
@@ -74,4 +75,9 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        return "/heladeria/"
+        user = self.request.user
+        # Verifica si el usuario pertenece al grupo Admin
+        if user.groups.filter(name="Admin").exists():
+            return reverse_lazy('reporte_dashboard')  # tu URL del dashboard
+        else:
+            return reverse_lazy('pos_home')  # tu URL actual del POS

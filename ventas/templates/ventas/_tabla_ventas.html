@@ -1,0 +1,83 @@
+{% load formatos %}
+{% load static %}
+<table class="modern-table">
+<thead>
+<tr>
+    <th style="width: 40px;"><input type="checkbox" class="custom-checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+    <th>ID Orden</th>
+    <th>Cliente</th>
+    <th>Estado</th>
+    <th>Total</th>
+    <th>Fecha Creación</th>
+    <th>Última Actualización</th>
+    <th>Acciones</th>
+</tr>
+</thead>
+<tbody>
+{% for venta in page_obj %}
+<tr id="venta-{{ venta.id }}">
+    <td><input type="checkbox" class="custom-checkbox venta-checkbox" value="{{ venta.id }}"></td>
+    <td>#SO-{{ venta.id|stringformat:"05d" }}</td>
+    <td>{{ venta.cliente.nombre_completo|default:venta.cliente }}</td>
+    <td>
+        <span class="status-badge 
+            {% if venta.estado == 'COMPLETED' %}status-completed
+            {% elif venta.estado == 'PENDING' %}status-pending
+            {% elif venta.estado == 'CANCELLED' %}status-cancelled
+            {% else %}status-cart
+            {% endif %}">
+            <span class="status-dot"></span>
+            {{ venta.get_estado_display }}
+        </span>
+    </td>
+    <td>${{ venta.total|precio_cl}}</td>
+    <td>{{ venta.fecha|date:"M d, Y" }}</td>
+    <td>{{ venta.fecha|date:"M d, Y H:i" }}</td>
+    <td><a href="{% url 'detalle_venta' venta.id %}" class="btn-view">Ver detalles</a></td>
+</tr>
+{% empty %}
+<tr><td colspan="8" style="text-align:center;color:#9CA3AF;">No se encontraron ventas</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<div class="table-footer" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-top:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <div class="results-per-page">
+                <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <button class="pagination-btn"
+                    {% if page_obj.has_previous %}
+                        data-page="1"
+                    {% else %} disabled {% endif %}>
+                ««
+            </button>
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_previous %}
+                        data-page="{{ page_obj.previous_page_number }}"
+                    {% else %} disabled {% endif %}>
+                «
+            </button>
+
+            <span class="pagination-info">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_next %}
+                        data-page="{{ page_obj.next_page_number }}"
+                    {% else %} disabled {% endif %}>
+                »
+            </button>
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_next %}
+                        data-page="{{ page_obj.paginator.num_pages }}"
+                    {% else %} disabled {% endif %}>
+                »»
+            </button>
+        </div>
+    </div>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Producto, Venta, DetalleVenta, Cliente
+from .models import Producto, Venta, DetalleVenta, Cliente, Categoria
 
 admin.site.site_header = "Heladería"
 admin.site.site_title = "Heladería Admin"
@@ -13,11 +13,11 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "precio", "stock", "state", "created_at", "updated_at")
-    search_fields = ("nombre",)
-    list_filter = ("state",)
+    list_display = ("nombre", "categoria", "precio", "stock", "state", "created_at", "updated_at")
+    search_fields = ("nombre", "categoria__nombre")
+    list_filter = ("state", "categoria")
     ordering = ("nombre",)
-    list_select_related = ()
+    list_select_related = ("categoria",)
 
 class DetalleVentaInline(admin.TabularInline):
     model = DetalleVenta
@@ -41,3 +41,9 @@ class VentaAdmin(admin.ModelAdmin):
     ordering = ("-fecha",)
     inlines = [DetalleVentaInline]
     list_select_related = ("usuario",)
+    
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'state', 'created_at')
+    search_fields = ('nombre',)
+    list_filter = ('state',)

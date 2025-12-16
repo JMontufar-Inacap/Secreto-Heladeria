@@ -1,0 +1,202 @@
+{% extends "heladeria/base_generic.html" %}
+{% load static %}
+{% load permisos_extras %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'categorias/css/lista_categorias.css' %}">
+{% endblock %}
+
+{% block page_title %}Categorías{% endblock %}
+
+{% block content %}
+<div class="categorias-container">
+
+    <div class="controls-row">
+        <div class="search-filter-section">
+            <form method="get" class="search-box">
+                <svg class="search-icon" width="18" height="18" fill="none"
+                     stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" name="q" class="search-input" placeholder="Buscar categoría..."
+                       value="{{ query|default:'' }}">
+            </form>
+        </div>
+
+        <div class="action-buttons">
+
+            {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
+            <button class="btn-action btn-primary-action"
+                    onclick="crearCategoria()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.5 3H12H8C6.34315 3 5 4.34315 5 6V18C5 19.6569 6.34315 21 8 21H11M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V11.8125" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 15V18M17 21V18M17 18H14M17 18H20" />
+                </svg>
+                Agregar Categoría
+            </button>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="categorias-grid">
+        {% for cat in categorias %}
+        <div class="categoria-card {% if not cat.activa %}inactiva{% endif %}">
+            <div class="categoria-header">
+                <h3>{{ cat.nombre }}</h3>
+                <span class="badge">
+                    {{ cat.total_productos }} productos
+                </span>
+            </div>
+
+            <p class="categoria-desc">
+                {{ cat.descripcion|default:"Sin descripción" }}
+            </p>
+
+            <div class="categoria-actions">
+                <button class="btn-action btn-secondary-action"
+                        onclick="editarCategoria({{ cat.id }}, '{{ cat.nombre|escapejs }}', '{{ cat.descripcion|default:''|escapejs }}')">
+                    Editar
+                </button>
+
+                {% if cat.activa %}
+                <button class="btn-action btn-danger-action"
+                        title="Desactivar"
+                        onclick="desactivarCategoria({{ cat.id }})">
+                    Desactivar categoria
+                </button>
+                {% else %}
+                <button class="btn-action btn-success-action"
+                        onclick="reactivarCategoria({{ cat.id }})">
+                    Reactivar
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p>No hay categorías registradas.</p>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function desactivarCategoria(id) {
+    Swal.fire({
+        title: "¿Desactivar categoría?",
+        text: "La categoría no se eliminará, solo quedará inactiva.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: "Sí, desactivar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch("{% url 'desactivar_categoria' 0 %}".replace("0", id), {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            }).then(() => location.reload());
+        }
+    });
+}
+
+function crearCategoria() {
+    Swal.fire({
+        title: "Nueva categoría",
+        html: `
+            <input id="nombre" class="swal2-input" placeholder="Nombre">
+            <textarea id="descripcion" class="swal2-textarea" placeholder="Descripción"></textarea>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Crear",
+        preConfirm: () => {
+            return {
+                nombre: document.getElementById("nombre").value,
+                descripcion: document.getElementById("descripcion").value
+            };
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            fetch("{% url 'crear_categoria_ajax' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams(result.value)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    Swal.fire("Error", data.error, "error");
+                }
+            });
+        }
+    });
+}
+
+function editarCategoria(id, nombreActual, descripcionActual) {
+    Swal.fire({
+        title: "Editar categoría",
+        html: `
+            <input id="nombre" class="swal2-input" value="${nombreActual}">
+            <textarea id="descripcion" class="swal2-textarea">${descripcionActual}</textarea>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        preConfirm: () => {
+            return {
+                nombre: document.getElementById("nombre").value,
+                descripcion: document.getElementById("descripcion").value
+            };
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            fetch("{% url 'editar_categoria_ajax' 0 %}".replace("0", id), {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams(result.value)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    Swal.fire("Error", data.error, "error");
+                }
+            });
+        }
+    });
+}
+
+function reactivarCategoria(id) {
+    Swal.fire({
+        title: "¿Reactivar categoría?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí, reactivar"
+    }).then(result => {
+        if (result.isConfirmed) {
+            fetch("{% url 'reactivar_categoria' 0 %}".replace("0", id), {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            }).then(() => location.reload());
+        }
+    });
+}
+</script>
+{% endblock %}

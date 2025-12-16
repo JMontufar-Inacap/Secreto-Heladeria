@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+{% load formatos %}
 <style>
     .chart-card {
         border-radius: 16px;
@@ -47,7 +47,7 @@
     <div class="col-md-6">
         <div class="chart-card">
             <div class="chart-title">Valor promedio por orden</div>
-            <h3 class="fw-bold mb-3">${{ avg_order_value }}</h3>
+            <h3 class="fw-bold mb-3">${{ avg_order_value |precio_cl}}</h3>
 
             <canvas id="chartAvgOrder" class="chart-wrapper"></canvas>
         </div>
@@ -57,7 +57,7 @@
     <div class="col-md-6">
         <div class="chart-card">
             <div class="chart-title">Gasto total mensual</div>
-            <h3 class="fw-bold mb-3">${{ total_compras }}</h3>
+            <h3 class="fw-bold mb-3">${{ total_compras |precio_cl}}</h3>
 
             <canvas id="chartTotalMonth" class="chart-wrapper"></canvas>
         </div>

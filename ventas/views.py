@@ -8,6 +8,8 @@ import json
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from openpyxl import Workbook
 from django.http import HttpResponse
+from django.template.loader import render_to_string
+from heladeria.decorators import grupo_requerido
 
 @login_required
 def lista_ventas(request):
@@ -29,7 +31,7 @@ def lista_ventas(request):
     if query:
         ventas = ventas.filter(
             Q(cliente__nombre__icontains=query) |
-            Q(usuario__username__icontains=query)
+            Q(cliente__rut__icontains=query)
         )
 
     ventas = ventas.annotate(
@@ -65,6 +67,68 @@ def lista_ventas(request):
         "ventas_canceladas": Venta.objects.filter(estado="CANCELLED").count(),
     })
 
+@login_required
+def lista_ventas_ajax(request):
+    query = request.GET.get('q', '')
+    estado = request.GET.get('estado', '')
+    sort = request.GET.get('sort', 'fecha')
+    direction = request.GET.get('direction', 'desc')
+
+    try:
+        per_page = int(request.GET.get('per_page', '10'))
+    except ValueError:
+        per_page = 10
+
+    ventas = Venta.objects.all()
+
+    # filtros
+    if estado:
+        ventas = ventas.filter(estado=estado)
+
+    if query:
+        ventas = ventas.filter(
+            Q(cliente__nombre__icontains=query) |
+            Q(cliente__rut__icontains=query)
+        )
+
+    # filtros adicionales de precio y fecha
+    min_total = request.GET.get('min_total')
+    max_total = request.GET.get('max_total')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+
+    ventas = ventas.annotate(
+        total_calc=Sum(F('detalleventa__producto__precio')*F('detalleventa__cantidad'), output_field=FloatField())
+    )
+
+    if min_total:
+        try:
+            ventas = ventas.filter(total_calc__gte=float(min_total))
+        except:
+            pass
+    if max_total:
+        try:
+            ventas = ventas.filter(total_calc__lte=float(max_total))
+        except:
+            pass
+    if fecha_inicio:
+        ventas = ventas.filter(fecha__date__gte=fecha_inicio)
+    if fecha_fin:
+        ventas = ventas.filter(fecha__date__lte=fecha_fin)
+
+    sort_field = 'total_calc' if sort == 'total' else sort
+    ventas = ventas.order_by(f"-{sort_field}" if direction == "desc" else sort_field)
+
+    paginator = Paginator(ventas, per_page)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    html = render_to_string("ventas/_tabla_ventas.html", {
+        'page_obj': page_obj,
+        'ventas': page_obj.object_list,
+    }, request=request)
+
+    return JsonResponse({'html': html})
 
 @login_required
 def detalle_venta(request, venta_id):
@@ -124,7 +188,7 @@ def exportar_ventas_excel(request):
         ws.append([
             v.id,
             v.usuario.username,
-            v.cliente.nombre if v.cliente else "-",
+            v.cliente.nombre_completo if v.cliente else "-",
             v.fecha.strftime("%Y-%m-%d %H:%M"),
             v.get_estado_display(),
             float(v.total_calc or 0)

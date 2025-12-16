@@ -1,0 +1,113 @@
+{% load static %}
+{% load formatos %}
+{% load permisos_extras %}
+<div class="table-container">
+
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th style="width:40px;">
+                    <input type="checkbox" class="custom-checkbox" id="selectAll" onclick="toggleSelectAll()">
+                </th>
+
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Categoría</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for producto in page_obj %}
+            <tr class="table-row">
+                <td>
+                    <input type="checkbox" class="custom-checkbox chkProducto" value="{{ producto.id }}">
+                </td>
+
+                <td class="product-name-cell fw-600">
+                    <div class="product-info">
+                        {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="product-thumb">
+                        {% else %}
+                            <img src="{% static 'img/no-image.jpg' %}" class="product-thumb">
+                        {% endif %}
+                        <span>{{ producto.nombre }}</span>
+                    </div>
+                </td>
+
+                <td>${{ producto.precio | precio_cl }}</td>
+                <td>{{ producto.categoria|default:"-" }}</td>
+                <td>{{ producto.stock }}</td>
+
+                <td>
+                    {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
+                    <a href="{% url 'detalle_productos' producto.pk %}" class="btn-view">Ver</a>
+                    <a href="{% url 'editar_producto' producto.pk %}" class="btn-view">Editar</a>
+                    {% endif %}
+                </td>
+
+            </tr>
+
+            {% empty %}
+            <tr>
+                <td colspan="7" class="no-data-msg" style="text-align:center;color:#9CA3AF;">No se encontraron productos.</td></tr>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- FOOTER -->
+<div class="table-footer" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-top:1rem;">
+
+    <!-- LEFT: resultados -->
+    <div style="display:flex; align-items:center; gap:1rem;">
+        <div class="results-per-page">
+            <span>
+                Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+            </span>
+        </div>
+    </div>
+
+    <!-- RIGHT: paginación (AJAX ONLY, NO FORM, NO SUBMIT) -->
+    <div class="pagination" style="display:flex; gap:0.5rem; align-items:center;">
+
+        <!-- FIRST -->
+        <button class="pagination-btn"
+                {% if page_obj.has_previous %}
+                    data-page="1"
+                {% else %} disabled {% endif %}>
+            ««
+        </button>
+
+        <!-- PREV -->
+        <button class="pagination-btn"
+                {% if page_obj.has_previous %}
+                    data-page="{{ page_obj.previous_page_number }}"
+                {% else %} disabled {% endif %}>
+            «
+        </button>
+
+        <span class="pagination-info">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+
+        <!-- NEXT -->
+        <button class="pagination-btn"
+                {% if page_obj.has_next %}
+                    data-page="{{ page_obj.next_page_number }}"
+                {% else %} disabled {% endif %}>
+            »
+        </button>
+
+        <!-- LAST -->
+        <button class="pagination-btn"
+                {% if page_obj.has_next %}
+                    data-page="{{ page_obj.paginator.num_pages }}"
+                {% else %} disabled {% endif %}>
+            »»
+        </button>
+
+    </div>
+
+</div>

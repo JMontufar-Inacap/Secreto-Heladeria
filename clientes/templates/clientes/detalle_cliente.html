@@ -1,6 +1,7 @@
 {% extends 'heladeria/base_generic.html' %}
 {% load static %}
-{% block page_title %}Cliente - {{ cliente.nombre }}{% endblock %}
+{% load formatos %}
+{% block page_title %}Cliente - {{ cliente.nombre_completo}}{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'clientes/css/lista_clientes.css' %}">{% endblock %}
 
 {% block content %}
@@ -16,7 +17,7 @@
 
                 <!-- IZQUIERDA: Nombre + ubicación -->
                 <div>
-                    <h2 class="fw-bold mb-2">{{ cliente.nombre }}</h2>
+                    <h2 class="fw-bold mb-2">{{ cliente.nombre_completo}}</h2>
 
                     <p class="text-muted mb-1">
                         <i class="bi bi-geo-alt-fill me-1"></i>
@@ -27,11 +28,11 @@
                 <div style="text-align: left;">
                     <p class="mb-1">
                         <i class="bi bi-person-badge-fill me-1"></i>
-                        <strong>RUT:</strong> {{ cliente.rut }}
+                        <strong>RUT:</strong> {{ cliente.rut |formato_rut}}
                     </p>
                     <p class="mb-1">
                         <i class="bi bi-telephone-fill me-1"></i>
-                        <strong>Teléfono:</strong> {{ cliente.telefono|default:"-" }}
+                        <strong>Teléfono:</strong> {{ cliente.telefono|formato_telefono|default:"-" }}
                     </p>
 
                     <p class="mb-0">
@@ -60,7 +61,7 @@
 
                 <!-- Total gastado -->
                 <div class="flex-fill ps-3">
-                    <h1 class="fw-bold">${{ total_compras }}</h1>
+                    <h1 class="fw-bold">${{ total_compras |precio_cl}}</h1>
                     <p class="text-muted mb-0">Total gastado por el cliente</p>
                 </div>
 
@@ -68,65 +69,8 @@
 
             <!-- TÍTULO LISTA -->
             <hr class="my-4">
-
-            <!-- TABLA DE VENTAS -->
-            {% if ventas %}
-<div class="table-container">
-    <table class="modern-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Estado</th>
-                <th>Total</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for venta in ventas %}
-            <tr>
-
-                <td>#{{ venta.id }}</td>
-                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-
-                <td>
-                    {% if venta.estado == "COMPLETED" %}
-                        <span class="status-badge status-completed">
-                            <span class="status-dot"></span> Completada
-                        </span>
-                    {% elif venta.estado == "PENDING" %}
-                        <span class="status-badge status-pending">
-                            <span class="status-dot"></span> Pendiente
-                        </span>
-                    {% elif venta.estado == "CANCELLED" %}
-                        <span class="status-badge status-cancelled">
-                            <span class="status-dot"></span> Cancelada
-                        </span>
-                    {% elif venta.estado == "CART" %}
-                        <span class="status-badge status-cart">
-                            <span class="status-dot"></span> Carrito
-                        </span>
-                    {% endif %}
-                </td>
-
-                <td>${{ venta.total }}</td>
-
-                <td>
-                    <a href="{% url 'detalle_venta' venta.id %}" class="btn-view">
-                        Ver Pedido
-                    </a>
-                </td>
-
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{% else %}
-<p class="no-data-msg">Este cliente no tiene ventas registradas.</p>
-{% endif %}
+            <!-- TABLA (contenedor AJAX) -->
+            <div id="tablaContainer"></div>
 
 
         </div>
@@ -160,6 +104,105 @@
             scales: { y: { beginAtZero: true } }
         }
     });
+
+document.addEventListener("DOMContentLoaded", function () {
+    cargarTablaDetalleCliente();
+});
+
+function cargarTablaDetalleCliente(params = "") {
+    const baseUrl = "{% url 'detalle_cliente_ajax' cliente.id %}";
+    const currentParams = new URLSearchParams(window.currentTableParams || "");
+
+    if (params) {
+        const newParams = new URLSearchParams(params);
+        newParams.forEach((v, k) => currentParams.set(k, v));
+    }
+
+    window.currentTableParams = currentParams.toString();
+
+    fetch(baseUrl + "?" + window.currentTableParams)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("tablaContainer").innerHTML = data.html;
+        });
+}
+
+// PAGINACIÓN
+document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("pagination-btn") && e.target.dataset.page) {
+        cargarTablaDetalleCliente("page=" + e.target.dataset.page);
+    }
+});
+
+// PAGE SIZE
+document.addEventListener("change", function (e) {
+    if (e.target.name === "page_size") {
+        cargarTablaDetalleCliente("page_size=" + e.target.value);
+    }
+});
+
+document.addEventListener("click", function (e) {
+    const link = e.target.closest("a");
+    if (!link) return;
+
+    if (link.classList.contains("no-ajax")) {
+        // dejar que el navegador descargue el archivo
+        return;
+    }
+});
+
+/* ==========================
+   FILTROS (SweetAlert)
+========================== */
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest("#btnFiltros");
+    if (!btn) return;
+
+    Swal.fire({
+        title: "Filtros",
+        html: document.getElementById("modal-filtros").innerHTML,
+        width: 480,
+        padding: "1.5rem",
+        background: "white",
+        showCancelButton: true,
+        confirmButtonText: "Aplicar filtros",
+        cancelButtonText: "Cancelar",
+
+        didOpen: () => {
+            const swalBox = Swal.getHtmlContainer();
+            const params = new URLSearchParams(window.currentTableParams || "");
+
+            swalBox.querySelector("#f_estado").value =
+                params.get("estado") || "";
+
+            swalBox.querySelector("#f_min_precio").value =
+                params.get("min_precio") || "";
+
+            swalBox.querySelector("#f_max_precio").value =
+                params.get("max_precio") || "";
+        },
+
+        preConfirm: () => {
+            const swalBox = Swal.getHtmlContainer();
+            const params = new URLSearchParams(window.currentTableParams || "");
+
+            const estado = swalBox.querySelector("#f_estado").value;
+            const minPrecio = swalBox.querySelector("#f_min_precio").value;
+            const maxPrecio = swalBox.querySelector("#f_max_precio").value;
+
+            if (estado) params.set("estado", estado);
+            else params.delete("estado");
+
+            if (minPrecio) params.set("min_precio", minPrecio);
+            else params.delete("min_precio");
+
+            if (maxPrecio) params.set("max_precio", maxPrecio);
+            else params.delete("max_precio");
+
+            cargarTablaDetalleCliente(params.toString());
+        }
+    });
+});
 </script>
 
 {% endblock %}

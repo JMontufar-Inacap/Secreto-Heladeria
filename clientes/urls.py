@@ -9,4 +9,6 @@ urlpatterns = [
     path('exportar/', views.exportar_clientes_excel, name='exportar_clientes_excel'),
     path("eliminar-multiples/", views.eliminar_clientes_multiples, name="eliminar_clientes_multiples"),
     path('<int:cliente_id>/', views.detalle_cliente, name='detalle_cliente'),
+    path('ajax/', views.lista_clientes_ajax, name='lista_clientes_ajax'),
+    path('<int:cliente_id>/detalle/ajax/',views.detalle_cliente_ajax, name="detalle_cliente_ajax"),
 ]

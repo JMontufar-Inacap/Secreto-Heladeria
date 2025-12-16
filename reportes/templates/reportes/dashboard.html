@@ -1,0 +1,427 @@
+{% extends "heladeria/base_generic.html" %}
+{% load formatos %}
+{% load static %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ============================= */
+/* 🎨 DASHBOARD STYLES */
+/* ============================= */
+:root {
+    --primary-blue: #4F46E5;
+    --hover-blue: #4338CA;
+    --border-light: #E5E7EB;
+    --text-gray: #6B7280;
+    --bg-light: #F9FAFB;
+}
+
+.dashboard-card {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.05);
+    height: 100%;
+}
+
+.dashboard-card small {
+    font-size: .8rem;
+    color: #6c757d;
+}
+
+.dashboard-card h4 {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.stat-change {
+    font-size: .85rem;
+    font-weight: 500;
+}
+
+.section-card {
+    border-radius: 16px;
+    border: 0;
+    box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+.filter-card {
+    border-radius: 16px;
+    border: 0;
+    box-shadow: 0 6px 20px rgba(0,0,0,.05);
+    background: #ffffff;
+}
+
+.filter-card .form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 12px;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+
+.filter-card .form-label {
+    color: #212529; /* negro Bootstrap */
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.filter-card .form-select,
+.filter-card .form-control {
+    background-color: #f1f3f5; /* gris claro */
+    color: #212529;
+}
+
+
+.filter-card .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.15rem rgba(102,126,234,.25);
+}
+
+.filter-card .form-select:hover {
+    background-color: #f8f9fa;
+}
+
+
+.btn-apply-filters {
+    background: white;
+    color: #667eea;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.5rem 2rem;
+    transition: all 0.3s ease;
+}
+
+.btn-apply-filters:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#productosSelect {
+    background-image: none; /* sin triangulo en multiple */
+    padding-right: 0.75rem;
+}
+
+.btn-action {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none !important;
+}
+
+.btn-primary-action {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.btn-primary-action:hover {
+    background: var(--hover-blue);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.stat-change {
+    font-size: 0.75rem;  /* tamaño más pequeño */
+    font-weight: 500;
+    line-height: 1;      /* opcional: ajusta altura de línea */
+}
+</style>
+
+<div class="container mt-4">
+
+    <div class="card filter-card mb-4">
+        <div class="card-body">
+            <form method="GET" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Estado de órdenes</label>
+                        <select name="estado" class="form-select">
+                            <option value="COMPLETED" {% if estado_filtro == 'COMPLETED' %}selected{% endif %}>
+                                Solo completadas
+                            </option>
+                            <option value="PENDING" {% if estado_filtro == 'PENDING' %}selected{% endif %}>
+                                Solo pendientes
+                            </option>
+                            <option value="BOTH" {% if estado_filtro == 'BOTH' %}selected{% endif %}>
+                                Ambas
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Período de tiempo</label>
+                        <select name="periodo" class="form-select">
+                            <option value="12meses" {% if periodo_filtro == '12meses' %}selected{% endif %}>
+                                Últimos 12 meses
+                            </option>
+                            <option value="10semanas" {% if periodo_filtro == '10semanas' %}selected{% endif %}>
+                                Últimas 10 semanas
+                            </option>
+                            <option value="7dias" {% if periodo_filtro == '7dias' %}selected{% endif %}>
+                                Últimos 7 días
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Productos (máx. 3)</label>
+                        <select name="productos" class="form-select" multiple id="productosSelect" size="1">
+
+                            <option value="" {% if not productos_seleccionados %}selected{% endif %}>
+                                Todos los productos
+                            </option>
+                            {% for producto in productos_disponibles %}
+                            <option value="{{ producto.id }}" 
+                                {% if producto.id|stringformat:"s" in productos_seleccionados %}selected{% endif %}>
+                                {{ producto.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn-action btn-primary-action">
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        {% if cards %}
+            {% for c in cards %}
+            <div class="col-md-{{ col_md }}">
+
+                <div class="card dashboard-card">
+                    <div class="card-body">
+                        <small>{{ c.titulo }}</small>
+                        <h4 class="mt-1">
+                            {% if c.moneda %}
+                                ${{ c.valor|precio_cl }}
+                            {% else %}
+                                {{ c.valor|floatformat:0 }}
+                            {% endif %}
+                        </h4>
+
+                        <div class="stat-change mt-2 {% if c.porcentaje >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if c.porcentaje >= 0 %}▲{% else %}▼{% endif %}
+                            {{ c.porcentaje }}% % vs
+                            {% if periodo_filtro == '7dias' %}
+                                ayer
+                            {% elif periodo_filtro == '10semanas' %}
+                                semana anterior
+                            {% elif periodo_filtro == '12meses' %}
+                                mes anterior
+                            {% else %}
+                                período anterior
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-md-3">
+                <div class="card dashboard-card">
+                    <div class="card-body">
+                        <small>Unidades vendidas</small>
+                        <h4>—</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dashboard-card">
+                    <div class="card-body">
+                        <small>Órdenes realizadas</small>
+                        <h4>—</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dashboard-card">
+                    <div class="card-body">
+                        <small>Dinero recibido</small>
+                        <h4>—</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dashboard-card">
+                    <div class="card-body">
+                        <small>Clientes con pedido</small>
+                        <h4>—</h4>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card section-card">
+                <div class="card-body">
+                    <h6 class="mb-3 fw-semibold">
+                        Ganancias - {{ periodo_label }}
+                    </h6>
+                    <canvas id="gananciasChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card h-100">
+                <div class="card-body">
+                    <h6 class="mb-3 fw-semibold">
+                        Top 5 productos - {{ periodo_label }}
+                    </h6>
+
+                    {% for p in top_productos %}
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if p.imagen %}
+                            <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}" width="40" height="40" class="rounded">
+                            {% else %}
+                            <div class="bg-secondary rounded" style="width:40px; height:40px;"></div>
+                            {% endif %}
+                            <span>{{ p.nombre }}</span>
+                        </div>
+                        <strong>{{ p.total_vendidos }}</strong>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small">No hay datos en este período</p>
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card section-card">
+                <div class="card-body">
+                    <h6 class="mb-3 fw-semibold">
+                        Órdenes - {{ periodo_label }}
+                    </h6>
+                    <canvas id="ordenesChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card h-100">
+                <div class="card-body">
+                    <h6 class="fw-semibold mb-3">
+                        Resumen rápido
+                    </h6>
+                    <ul class="small mb-0">
+                        <li>Orden promedio: <strong>${{ ticket_promedio|precio_cl }}</strong></li>
+                        <li>Producto estrella: <strong>{{ producto_top }}</strong></li>
+                        <li>Total órdenes: <strong>{{ ordenes_12_meses }}</strong></li>
+                        <li class="{% if crecimiento_ordenes >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            Crecimiento: <strong>{% if crecimiento_ordenes >= 0 %}+{% endif %}{{ crecimiento_ordenes }}%</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const ctxGanancias = document.getElementById("gananciasChart");
+
+new Chart(ctxGanancias, {
+    type: "bar",
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: "Ganancias",
+            data: {{ chart_data|safe }},
+            backgroundColor: "rgba(54, 162, 235, 0.7)",
+            borderColor: "rgba(54, 162, 235, 1)",
+            borderWidth: 2,
+            borderRadius: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: value => "$" + value.toLocaleString("es-CL")
+                }
+            }
+        }
+    }
+});
+
+const ctxOrdenes = document.getElementById("ordenesChart");
+
+new Chart(ctxOrdenes, {
+    type: "line",
+    data: {
+        labels: {{ ordenes_chart_labels|safe }},
+        datasets: [{
+            label: "Órdenes",
+            data: {{ ordenes_chart_data|safe }},
+            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: "rgba(75, 192, 192, 1)",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2,
+            pointHoverRadius: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+document.getElementById('productosSelect').addEventListener('change', function(e) {
+    const selected = Array.from(this.selectedOptions).filter(opt => opt.value !== '');
+    if (selected.length > 3) {
+        alert('Puedes seleccionar máximo 3 productos');
+        selected[selected.length - 1].selected = false;
+    }
+});
+</script>
+
+{% endblock %}

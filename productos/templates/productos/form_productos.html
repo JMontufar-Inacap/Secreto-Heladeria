@@ -1,47 +1,193 @@
 {% extends 'heladeria/base_generic.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'productos/css/producto_form.css' %}">
+{% endblock %}
+
+{% block page_title %}
+    {{ accion }} producto
+{% endblock %}
+
 {% block content %}
+<div class="container-fluid mt-4">
+    <form id="productoForm" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
 
-<h2 class="mb-4">{{ accion }} Producto</h2>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card soft-card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Información general</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre producto</label>
+                            {{ form.nombre }}
+                            {{ form.nombre.errors }}
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">Descripción</label>
+                            {{ form.descripcion }}
+                            {{ form.descripcion.errors }}
+                        </div>
+                    </div>
+                </div>
 
-<form method="post" enctype="multipart/form-data" novalidate>
-    {% csrf_token %}
+                <div class="card soft-card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Precio y stock</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Precio</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.precio }}
+                                </div>
+                                {{ form.precio.errors }}
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Stock</label>
+                                {{ form.stock }}
+                                {{ form.stock.errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    {% for field in form %}
-        <div class="mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-            {{ field.as_widget }}
+            <div class="col-lg-4 d-flex flex-column">
 
-            {% if field.errors %}
-                {% for error in field.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
+                <div class="card soft-card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">Imagen producto</h5>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary p-2 d-flex align-items-center justify-content-center"
+                                    onclick="document.getElementById('id_imagen').click()"
+                                    style="width: 36px; height: 36px; border-radius: 50%;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34c.38-.38.38-1.02 0-1.41
+                                            l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="image-preview mb-2">
+                            <img id="previewImg"
+                                src="{% if form.instance.imagen %}
+                                        {{ form.instance.imagen.url }}
+                                    {% else %}
+                                        {% static 'img/placeholder.png' %}
+                                    {% endif %}"
+                                class="img-fluid rounded">
+                        </div>
+                        {{ form.imagen }}
+                        {{ form.imagen.errors }}
+                    </div>
+                </div>
+                <input type="file" id="id_imagen" style="display: none;" onchange="previewImagen(event)">
+
+                <div class="card soft-card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Categoría</h5>
+
+                        <div class="select-wrapper">
+                            {{ form.categoria }}
+                        </div>
+                        {{ form.categoria.errors }}
+                    </div>
+                </div>
+
+                <div class="mt-auto d-flex justify-content-end gap-2">
+                    <a href="{% url 'lista_productos' %}" class="btn-action btn-secondary-action px-4">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn-action btn-primary-action px-5">
+                        {{ accion }}
+                    </button>
+                </div>
+            </div>
         </div>
-    {% endfor %}
-
-    <button type="submit" class="btn btn-success">{{ accion }}</button>
-    <a href="{% url 'lista_productos' %}" class="btn btn-secondary">Cancelar</a>
-</form>
+    </form>
+</div>
 
 {% if mensaje %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", () => {
+
     Swal.fire({
         title: "{{ mensaje }}",
         icon: "{{ tipo_mensaje }}",
-        confirmButtonText: "OK",
-        timer: 2500,
-        timerProgressBar: true,
+        timer: 2200,
+        showConfirmButton: false
     }).then(() => {
         {% if tipo_mensaje == 'success' %}
             window.location.href = "{% url 'lista_productos' %}";
         {% endif %}
     });
+
 });
 </script>
 {% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const nombreInput = document.getElementById("id_nombre");
+    if (!nombreInput) return;
+
+    // Evitar caracteres que no sean letras ni espacios
+    nombreInput.addEventListener("keypress", (e) => {
+        const char = String.fromCharCode(e.which);
+        if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ\s]/.test(char)) {
+            e.preventDefault(); // bloquea la tecla
+        }
+    });
+
+    // Opcional: eliminar cualquier carácter inválido si pega texto
+    nombreInput.addEventListener("input", () => {
+        nombreInput.value = nombreInput.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const imagenInput = document.getElementById("id_imagen");
+    if (imagenInput) {
+        imagenInput.addEventListener("change", function(e) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                document.getElementById("previewImg").src = reader.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+    }
+
+    const precioInput = document.getElementById("id_precio");
+    const form = document.getElementById("productoForm");
+
+    if (!precioInput || !form) return;
+
+    if (precioInput.value) {
+        let initial = parseFloat(precioInput.value.replace(",", "."));
+        if (!isNaN(initial)) {
+            precioInput.value = Math.trunc(initial)
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+    }
+    precioInput.addEventListener("input", () => {
+        let raw = precioInput.value.replace(/\./g, "").replace(/\D/g, "");
+        if (!raw) {
+            precioInput.value = "";
+            return;
+        }
+
+        precioInput.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    });
+    form.addEventListener("submit", () => {
+        precioInput.value = precioInput.value.replace(/\./g, "");
+    });
+});
+</script>
 
 {% endblock %}

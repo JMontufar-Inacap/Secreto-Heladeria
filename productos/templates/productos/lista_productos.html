@@ -1,5 +1,6 @@
 {% extends "heladeria/base_generic.html" %}
 {% load static %}
+{% load formatos %}
 {% load permisos_extras %}
 
 {% block extra_css %}
@@ -14,52 +15,51 @@
         <div class="products-tabs">
 
             <!-- TODOS -->
-            <form method="get" style="display:inline">
-                <input type="hidden" name="q" value="{{ query }}">
-                <input type="hidden" name="per_page" value="{{ per_page }}">
-                <input type="hidden" name="sort" value="{{ sort }}">
-                <input type="hidden" name="direction" value="{{ direction }}">
-                <button type="submit" name="stock" value="" class="tab-item {% if stock == '' %}active{% endif %}">
-                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                    Todos
-                    <span class="tab-count">{{ total_productos|default:0 }}</span>
-                </button>
-            </form>
+            <button 
+    class="tab-item {% if stock == '' %}active{% endif %}"
+    data-stock=""
+    onclick="cambiarStockTab(this)"
+>
 
-            <!-- STOCK DISPONIBLE -->
-            <form method="get" style="display:inline">
-                <input type="hidden" name="q" value="{{ query }}">
-                <input type="hidden" name="per_page" value="{{ per_page }}">
-                <input type="hidden" name="sort" value="{{ sort }}">
-                <input type="hidden" name="direction" value="{{ direction }}">
-                <button type="submit" name="stock" value="1" class="tab-item {% if stock == '1' %}active{% endif %}">
-                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Con Stock
-                    <span class="tab-count">{{ productos_con_stock|default:0 }}</span>
-                </button>
-            </form>
+                <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                Todos
+                <span class="tab-count">{{ total_productos|default:0 }}</span>
+            </button>
+
+            <!-- CON STOCK -->
+            <button 
+    class="tab-item {% if stock == '1' %}active{% endif %}"
+    data-stock="1"
+    onclick="cambiarStockTab(this)"
+>
+
+
+                <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 13l4 4L19 7"/>
+                </svg>
+                Con Stock
+                <span class="tab-count">{{ productos_con_stock|default:0 }}</span>
+            </button>
 
             <!-- SIN STOCK -->
-            <form method="get" style="display:inline">
-                <input type="hidden" name="q" value="{{ query }}">
-                <input type="hidden" name="per_page" value="{{ per_page }}">
-                <input type="hidden" name="sort" value="{{ sort }}">
-                <input type="hidden" name="direction" value="{{ direction }}">
-                <button type="submit" name="stock" value="0" class="tab-item {% if stock == '0' %}active{% endif %}">
-                    <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    Sin Stock
-                    <span class="tab-count">{{ productos_sin_stock|default:0 }}</span>
-                </button>
-            </form>
+            <button 
+    class="tab-item {% if stock == '0' %}active{% endif %}"
+    data-stock="0"
+    onclick="cambiarStockTab(this)"
+>
+
+
+                <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Sin Stock
+                <span class="tab-count">{{ productos_sin_stock|default:0 }}</span>
+            </button>
 
         </div>
     </div>
@@ -79,20 +79,21 @@
                         d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
                 </svg>
 
-                <input type="text" name="q" class="search-input"
-                       placeholder="Buscar producto..." value="{{ query|default:'' }}">
+                <input id="searchInput" type="text" name="q" class="search-input"
+                    placeholder="Buscar producto..." value="{{ query|default:'' }}">
+
 
                 <input type="hidden" name="sort" value="{{ sort }}">
                 <input type="hidden" name="direction" value="{{ direction }}">
             </form>
 
             <!-- PER PAGE -->
-            <select name="per_page" form="searchForm" class="filter-select"
-                    onchange="document.getElementById('searchForm').submit()">
+            <select id="perPageSelect" class="filter-select">
                 <option value="5"  {% if per_page == 5 %}selected{% endif %}>5 por página</option>
                 <option value="10" {% if per_page == 10 %}selected{% endif %}>10 por página</option>
                 <option value="20" {% if per_page == 20 %}selected{% endif %}>20 por página</option>
             </select>
+
 
         </div>
 
@@ -136,140 +137,9 @@
         </div>
     </div>
 
-    <!-- TABLE -->
-    <div class="table-container">
-        <table class="modern-table">
-            <thead>
-                <tr>
-                    <th style="width:40px;">
-                        <input type="checkbox" class="custom-checkbox" id="selectAll" onclick="toggleSelectAll()">
-                    </th>
-
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Categoría</th>
-                    <th>Stock</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for producto in page_obj %}
-                <tr class="table-row">
-
-                    <td>
-                        <input type="checkbox" class="custom-checkbox chkProducto" value="{{ producto.id }}">
-                    </td>
-                    <td class="product-name-cell fw-600">
-                        <div class="product-info">
-                            {% if producto.imagen %}
-                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="product-thumb">
-                            {% else %}
-                                <img src="{% static 'img/no-image.png' %}" class="product-thumb">
-                            {% endif %}
-                            <span>{{ producto.nombre }}</span>
-                        </div>
-                    </td>
-
-                    <td>${{ producto.precio }}</td>
-                    <td>{{ producto.categoria|default:"-" }}</td>
-                    <td>{{ producto.stock }}</td>
-
-                    <td>
-                        {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
-                        <a href="{% url 'detalle_productos' producto.pk %}" class="btn-view">Ver</a>
-                        <a href="{% url 'editar_producto' producto.pk %}" class="btn-view">Editar</a>
-                        {% endif %}
-                    </td>
-
-                </tr>
-
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="no-data-msg">No hay productos registrados.</td>
-                </tr>
-
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- FOOTER -->
-        <div class="table-footer">
-
-            <div class="results-per-page">
-                <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
-            </div>
-
-            <!-- PAGINATION -->
-            <div class="pagination">
-                <form method="get" style="display:flex; gap:0.5rem; align-items:center;">
-
-                    {% for k,v in request.GET.items %}
-                        {% if k != 'page' %}
-                        <input type="hidden" name="{{ k }}" value="{{ v|escape }}">
-                        {% endif %}
-                    {% endfor %}
-
-                    <!-- First -->
-                    <button type="submit" name="page" value="1" class="pagination-btn"
-                        {% if not page_obj.has_previous %}disabled{% endif %}>
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                    </button>
-
-                    <!-- Prev -->
-                    {% if page_obj.has_previous %}
-                    <button type="submit" name="page" value="{{ page_obj.previous_page_number }}" class="pagination-btn">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    {% else %}
-                    <button type="button" class="pagination-btn" disabled>
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    {% endif %}
-
-                    <span class="pagination-info">
-                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-                    </span>
-
-                    <!-- Next -->
-                    {% if page_obj.has_next %}
-                    <button type="submit" name="page" value="{{ page_obj.next_page_number }}" class="pagination-btn">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                    {% else %}
-                    <button type="button" class="pagination-btn" disabled>
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                    {% endif %}
-
-                    <!-- Last -->
-                    <button type="submit" name="page" value="{{ page_obj.paginator.num_pages }}"
-                            class="pagination-btn" {% if not page_obj.has_next %}disabled{% endif %}>
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                        </svg>
-                    </button>
-
-                </form>
-            </div>
-        </div>
-    </div>
+    <div id="tablaContainer">
+        {% include "productos/_tabla_productos.html" %}
+      </div>
 
 </div>
 
@@ -277,19 +147,90 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+/* ----- helpers que leen el DOM en el momento ----- */
+function construirURL(page = 1) {
+    const searchInput = document.getElementById("searchInput");
+    const sortField = document.getElementById("sortField");
+    const sortDirection = document.getElementById("sortDirection");
+    const perPageSelect = document.getElementById("perPageSelect");
+
+    const url = new URL("{% url 'lista_productos_ajax' %}", window.location.origin);
+
+    url.searchParams.set("q", (searchInput && searchInput.value) || "");
+    url.searchParams.set("sort", (sortField && sortField.value) || "nombre");
+    url.searchParams.set("direction", (sortDirection && sortDirection.value) || "asc");
+    url.searchParams.set("per_page", (perPageSelect && perPageSelect.value) || 10);
+    url.searchParams.set("stock", stockActual || "");
+    url.searchParams.set("page", page);
+
+    return url.toString();
+}
+
+function cargarTabla(page = 1) {
+    const tablaContainer = document.getElementById("tablaContainer");
+    if (!tablaContainer) return; // seguridad
+
+    fetch(construirURL(page))
+        .then(res => res.json())
+        .then(data => {
+            tablaContainer.innerHTML = data.html;
+            reconectarEventos();
+        })
+        .catch(err => {
+            console.error("Error al cargar tabla:", err);
+        });
+}
+
+function reconectarEventos() {
+    document.querySelectorAll(".pagination-btn[data-page]").forEach(btn => {
+        // remover listeners previos (para evitar duplicados)
+        btn.replaceWith(btn.cloneNode(true));
+    });
+    // volver a seleccionar ya con clones limpios
+    document.querySelectorAll(".pagination-btn[data-page]").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            cargarTabla(this.dataset.page);
+        });
+    });
+}
+
+/* ----- inicialización de listeners que dependen del DOM ----- */
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const sortField = document.getElementById("sortField");
+    const sortDirection = document.getElementById("sortDirection");
+    const perPageSelect = document.getElementById("perPageSelect");
+
+    // buscador: debounce ligero para no hacer mil requests
+    let debounceTimer;
+    if (searchInput) {
+        searchInput.addEventListener("keyup", () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => cargarTabla(1), 250);
+        });
+    }
+
+    if (sortField) sortField.addEventListener("change", () => cargarTabla(1));
+    if (sortDirection) sortDirection.addEventListener("change", () => cargarTabla(1));
+    if (perPageSelect) perPageSelect.addEventListener("change", () => cargarTabla(1));
+
+    // cargar la tabla inicial (si quieres que cargue al entrar)
+    cargarTabla(1);
+});
+
+/* ----- acciones de UI ----- */
 function toggleSelectAll() {
-    const checked = document.getElementById("selectAll").checked;
-    document.querySelectorAll(".chkProducto").forEach(cb => cb.checked = checked);
+    const checked = document.getElementById("selectAll")?.checked;
+    document.querySelectorAll(".chkProducto").forEach(cb => cb.checked = !!checked);
 }
 
 function eliminarSeleccionados() {
     const seleccionados = [...document.querySelectorAll(".chkProducto:checked")].map(cb => cb.value);
-
     if (seleccionados.length === 0) {
         Swal.fire("Atención", "Selecciona al menos un producto.", "warning");
         return;
     }
-
     Swal.fire({
         title: "¿Eliminar productos?",
         text: "Esta acción eliminará los productos seleccionados.",
@@ -300,7 +241,6 @@ function eliminarSeleccionados() {
         confirmButtonText: "Sí, eliminar"
     }).then(result => {
         if (result.isConfirmed) {
-
             fetch("{% url 'eliminar_productos_multiples' %}", {
                 method: "POST",
                 headers: {
@@ -312,12 +252,10 @@ function eliminarSeleccionados() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-
                     seleccionados.forEach(id => {
-                        const fila = document.querySelector(`input[value="${id}"]`).closest("tr");
-                        fila.remove();
+                        const fila = document.querySelector(`input[value="${id}"]`)?.closest("tr");
+                        if (fila) fila.remove();
                     });
-
                     Swal.fire("Eliminados", "Productos eliminados correctamente.", "success");
                 } else {
                     Swal.fire("Error", data.error || "Ocurrió un problema.", "error");
@@ -327,6 +265,21 @@ function eliminarSeleccionados() {
         }
     });
 }
+
+/* ----- tabs stock ----- */
+let stockActual = "{{ stock|default:'' }}";
+
+function cambiarStockTab(el) {
+    stockActual = el.dataset.stock ?? "";
+
+    document.querySelectorAll(".products-tabs .tab-item")
+        .forEach(btn => btn.classList.remove("active"));
+
+    el.classList.add("active");
+
+    cargarTabla(1);
+}
+
 </script>
 
 {% endblock %}

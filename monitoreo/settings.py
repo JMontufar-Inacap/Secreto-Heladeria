@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'accounts',
     'ventas',
     'productos',
+    'categorias',
+    'reportes',
 ]
 
 MIDDLEWARE = [
@@ -77,7 +79,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'monitoreo.wsgi.application'
 
-LOGIN_REDIRECT_URL = '/heladeria/'  
+LOGIN_REDIRECT_URL = '/heladeria/pos'  
 
 LOGIN_URL = '/accounts/login/'  
 
@@ -143,7 +145,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type

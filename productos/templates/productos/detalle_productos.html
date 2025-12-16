@@ -1,149 +1,196 @@
 {% extends 'heladeria/base_generic.html' %}
 {% load static %}
+{% load formatos %}
+
 {% block page_title %}Producto - {{ producto.nombre }}{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'productos/css/lista_productos.css' %}">
 {% endblock %}
 
 {% block content %}
-
 <div class="container py-4">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- CARD PRINCIPAL -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-
-            <div class="d-flex justify-content-between align-items-start flex-wrap">
-
-                <!-- IZQUIERDA: Nombre + categoría -->
-                <div>
-                    <h2 class="fw-bold mb-2">{{ producto.nombre }}</h2>
-
-                    <p class="text-muted mb-1">
-                        <i class="bi bi-tag-fill me-1"></i>
-                        Categoría: {{ producto.categoria|default:"Sin categoría" }}
-                    </p>
-
-                    <p class="text-muted mb-1">
-                        <i class="bi bi-currency-dollar me-1"></i>
-                        Precio: <strong>${{ producto.precio }}</strong>
-                    </p>
-                </div>
-
-                <!-- DERECHA -->
-                <div style="text-align: left;">
-                    <p class="mb-1">
-                        <i class="bi bi-box-seam me-1"></i>
-                        <strong>Stock:</strong> {{ producto.stock }}
-                    </p>
-
-                    <p class="mb-0">
-                        <i class="bi bi-card-text me-1"></i>
-                        <strong>Descripción:</strong> {{ producto.descripcion|default:"-" }}
-                    </p>
-                </div>
-
-            </div>
-
-        </div>
+  <!-- PRODUCT CARD -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body d-flex justify-content-between flex-wrap">
+      <div>
+        <h2 class="fw-bold mb-2">{{ producto.nombre }}</h2>
+        <p class="text-muted mb-1"><i class="bi bi-tag-fill me-1"></i> Categoría: {{ producto.categoria|default:"Sin categoría" }}</p>
+        <p class="text-muted mb-1"><i class="bi bi-currency-dollar me-1"></i> Precio: <strong>${{ producto.precio|precio_cl }}</strong></p>
+      </div>
+      <div>
+        <p class="mb-1"><i class="bi bi-box-seam me-1"></i><strong>Stock:</strong> {{ producto.stock }}</p>
+        <p class="mb-0"><i class="bi bi-card-text me-1"></i><strong>Descripción:</strong> - </p>
+      </div>
     </div>
+  </div>
 
-    <!-- CARD ESTADÍSTICAS + LISTA DE VENTAS -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
+  <!-- STATS -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
 
-            <!-- ESTADÍSTICAS -->
-            <div class="d-flex justify-content-between text-center mb-4">
-
-                <!-- Total vendido -->
-                <div class="flex-fill border-end pe-3">
-                    <h1 class="fw-bold">{{ total_vendido }}</h1>
-                    <p class="text-muted mb-0">Unidades vendidas</p>
-                </div>
-
-                <!-- Total generado -->
-                <div class="flex-fill ps-3">
-                    <h1 class="fw-bold">${{ total_ganado }}</h1>
-                    <p class="text-muted mb-0">Ingresos generados</p>
-                </div>
-
-            </div>
-
-            <hr class="my-4">
-
-            <!-- TABLA DE VENTAS -->
-            {% if ventas %}
-            <div class="table-container">
-                <table class="modern-table">
-                    <thead>
-                        <tr>
-                            <th>ID Venta</th>
-                            <th>Fecha</th>
-                            <th>Cantidad</th>
-                            <th>Total línea</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for item in ventas %}
-                        <tr>
-                            <td>#{{ item.venta.id }}</td>
-                            <td>{{ item.venta.fecha|date:"d/m/Y H:i" }}</td>
-                            <td>{{ item.cantidad }}</td>
-                            <td>${{ item.subtotal }}</td>
-                            <td>
-                                <a href="{% url 'detalle_venta' item.venta.id %}" class="btn-view">
-                                    Ver
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% else %}
-                <p class="no-data-msg">Este producto no ha sido vendido aún.</p>
-            {% endif %}
-
+      <div class="d-flex justify-content-between text-center mb-4">
+        <div class="flex-fill border-end pe-3">
+          <h1 id="stat-total-vendido" class="fw-bold">{{ total_vendido }}</h1>
+          <p class="text-muted mb-0">Unidades vendidas</p>
         </div>
-    </div>
 
-    <!-- GRÁFICO -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="mb-3">Historial de ventas</h5>
-            <canvas id="graficoProducto"></canvas>
+        <div class="flex-fill border-end ps-3">
+          <h1 id="stat-total-ganado" class="fw-bold">${{ total_ganado|precio_cl }}</h1>
+          <p class="text-muted mb-0">Ingresos generados</p>
         </div>
-    </div>
 
-    <a href="{% url 'lista_productos' %}" class="btn btn-outline-primary">← Volver</a>
+        <div class="flex-fill border-end ps-3 pe-3">
+          <h1 id="stat-unidades-pendientes" class="fw-bold">
+            {{ unidades_pendientes }}
+          </h1>
+          <p class="text-muted mb-0">Unidades en proceso</p>
+        </div>
+
+        <div class="flex-fill ps-3">
+          <h1 id="stat-ingreso-proceso" class="fw-bold">
+            ${{ ingreso_pendiente|precio_cl }}
+          </h1>
+          <p class="text-muted mb-0">Ingresos en proceso</p>
+        </div>
+
+      </div>
+
+      <hr class="my-4">
+
+      <!-- TABLA (contenedor que AJAX reemplazará) -->
+      <div id="tablaContainer">
+        {% include "productos/_tabla_detalle_productos.html" %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GRÁFICO -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="mb-3">Historial de ventas</h5>
+      <canvas id="graficoProducto"></canvas>
+    </div>
+  </div>
+
+  <a href="{% url 'lista_productos' %}" class="btn btn-outline-primary">← Volver</a>
 
 </div>
 
 <script>
-    const ctx = document.getElementById('graficoProducto');
+/* Chart: usa la variable ventas que la vista envía (ventas_validas_qs) */
+const ctx = document.getElementById('graficoProducto');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [{% for p in ventas %}"{{ p.venta.fecha|date:'d/m' }}",{% endfor %}],
+        datasets: [{
+            label: "Cantidad",
+            data: [{% for p in ventas %}{{ p.cantidad }},{% endfor %}],
+            borderWidth: 2,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [{% for p in ventas %}"{{ p.venta.fecha|date:'d/m' }}",{% endfor %}],
-            datasets: [{
-                label: "Cantidad",
-                data: [{% for p in ventas %}{{ p.cantidad }},{% endfor %}],
-                borderWidth: 2,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
+/* AJAX helpers */
+function fetchTabla(params = "") {
+    let baseUrl = "{% url 'detalle_productos_ajax' producto.id %}";
+    let finalUrl = params ? `${baseUrl}?${params.replace(/^\?/, "")}` : baseUrl;
+
+    fetch(finalUrl, { 
+        headers: { "X-Requested-With": "XMLHttpRequest" } 
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById("tablaContainer").innerHTML = data.html;
+
+        if (data.stats) {
+            document.getElementById("stat-total-vendido").innerText = data.stats.total_vendido;
+            document.getElementById("stat-total-ganado").innerText = "$" + data.stats.total_ganado;
+            document.getElementById("stat-ingreso-potencial").innerText = "$" + data.stats.ingreso_potencial;
         }
     });
+}
+
+
+/* PAGINACIÓN AJAX */
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".pagination-btn");
+    if (!btn || !btn.dataset.page) return;
+
+    fetchTabla("page=" + btn.dataset.page);
+});
+
+
+/* PAGE SIZE AJAX */
+document.addEventListener("change", function (e) {
+    if (e.target.classList.contains("auto-submit")) {
+        fetchTabla("page_size=" + e.target.value);
+    }
+});
+
+/* Filtros auto-submit (si existen) */
+document.addEventListener("change", function (e) {
+    if (e.target && e.target.classList.contains("auto-submit")) {
+        const form = document.getElementById("form-filtros");
+        if (!form) return;
+
+        const qs = new URLSearchParams(new FormData(form)).toString();
+        fetchTabla("?" + qs);
+    }
+});
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest("#btnFiltros");
+    if (!btn) return;
+
+    Swal.fire({
+        title: "Filtros",
+        html: document.getElementById("modal-filtros").innerHTML,
+        width: 480,
+        padding: "1.5rem",
+        background: "white",
+        showCancelButton: true,
+        confirmButtonText: "Aplicar filtros",
+        cancelButtonText: "Cancelar",
+
+        didOpen: () => {
+            const swalBox = Swal.getHtmlContainer();
+            const params = new URLSearchParams(window.location.search);
+
+            swalBox.querySelector("#f_estado").value = params.get("estado") || "";
+            swalBox.querySelector("#f_min_cantidad").value = params.get("min_cantidad") || "";
+            swalBox.querySelector("#f_max_cantidad").value = params.get("max_cantidad") || "";
+            swalBox.querySelector("#f_min_precio").value = params.get("min_precio") || "";
+            swalBox.querySelector("#f_max_precio").value = params.get("max_precio") || "";
+        },
+
+        preConfirm: () => {
+            const swalBox = Swal.getHtmlContainer();
+            const params = new URLSearchParams();
+
+            ["estado","min_cantidad","max_cantidad","min_precio","max_precio"].forEach(key => {
+                let val = swalBox.querySelector(`#f_${key}`).value;
+                if (val) params.set(key, val);
+            });
+
+            return fetchTabla(params.toString());
+        }
+    });
+});
+
+
+
 </script>
 
 {% endblock %}

@@ -27,11 +27,17 @@
 
         <div class="col-md-2 personalizado" style="display: none;">
             <label class="form-label">Desde:</label>
-            <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+            <input type="date" name="fecha_inicio"
+       value="{{ fecha_inicio|default:'' }}"
+       class="form-control form-control-sm">
+
         </div>
         <div class="col-md-2 personalizado" style="display: none;">
             <label class="form-label">Hasta:</label>
-            <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+            <input type="date" name="fecha_fin"
+       value="{{ fecha_fin|default:'' }}"
+       class="form-control form-control-sm">
+
         </div>
 
         <div class="col-md-1 d-flex align-items-end">

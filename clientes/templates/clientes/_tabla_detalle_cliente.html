@@ -1,0 +1,177 @@
+{% load formatos %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'productos/css/lista_productos.css' %}">
+
+<div class="table-container">
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for venta in page_obj %}
+            <tr>
+                <td>#{{ venta.id }}</td>
+                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+
+                <td>
+                    {% if venta.estado == "COMPLETED" %}
+                        <span class="status-badge status-completed">
+                            <span class="status-dot"></span>
+                            Completada
+                        </span>
+                    {% elif venta.estado == "PENDING" %}
+                        <span class="status-badge status-pending">
+                            <span class="status-dot"></span>
+                            Pendiente
+                        </span>
+                    {% elif venta.estado == "CANCELLED" %}
+                        <span class="status-badge status-cancelled">
+                            <span class="status-dot"></span>
+                            Cancelada
+                        </span>
+                    {% else %}
+                        <span class="status-badge status-cart">
+                            <span class="status-dot"></span>
+                            Carrito
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td>${{ venta.total|precio_cl }}</td>
+
+                <td>
+                    <a href="{% url 'detalle_venta' venta.id %}" class="btn-view">
+                        Ver Pedido
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="no-data-msg">
+                    No hay ventas con estos filtros.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-footer">
+
+    <div class="results-per-page" style="display:flex; align-items:center; gap:1rem;">
+        <span>
+            Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
+            de {{ page_obj.paginator.count }}
+        </span>
+
+        <form method="get">
+            <select name="page_size" class="form-select form-select-sm auto-submit">
+                <option value="5" {% if page_size == 5 %}selected{% endif %}>5</option>
+                <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+            </select>
+
+            {% for k,v in request.GET.items %}
+                {% if k != 'page_size' %}
+                    <input type="hidden" name="{{ k }}" value="{{ v }}">
+                {% endif %}
+            {% endfor %}
+        </form>
+    </div>
+
+    <div class="footer-controls" style="display:flex; align-items:center; gap:1rem;">
+
+        <button class="btn-action btn-primary-action" id="btnFiltros">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 4h18M6 12h12M10 20h4" />
+            </svg>
+            Filtros
+        </button>
+
+        <a href="?export=excel&{{ request.GET.urlencode }}"
+            class="btn-action btn-secondary-action no-ajax">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 
+                       1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/>
+            </svg>
+            Exportar Excel
+        </a>
+
+        <div class="pagination">
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_previous %}
+                        data-page="1"
+                    {% else %} disabled {% endif %}>
+                ««
+            </button>
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_previous %}
+                        data-page="{{ page_obj.previous_page_number }}"
+                    {% else %} disabled {% endif %}>
+                «
+            </button>
+
+            <span class="pagination-info">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_next %}
+                        data-page="{{ page_obj.next_page_number }}"
+                    {% else %} disabled {% endif %}>
+                »
+            </button>
+
+            <button class="pagination-btn"
+                    {% if page_obj.has_next %}
+                        data-page="{{ page_obj.paginator.num_pages }}"
+                    {% else %} disabled {% endif %}>
+                »»
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-filtros" style="display:none;">
+    <div class="filtros-modal">
+
+        <div class="filtro-row">
+            <label for="f_estado">Estado</label>
+            <div class="search-box">
+                <select id="f_estado" class="search-input">
+                    <option value="">Todos</option>
+                    <option value="COMPLETED">Completadas</option>
+                    <option value="PENDING">Pendientes</option>
+                    <option value="CANCELLED">Canceladas</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filtro-row">
+            <label for="f_min_precio">Precio mínimo</label>
+            <div class="search-box">
+                <input type="number" id="f_min_precio" class="search-input">
+            </div>
+        </div>
+
+        <div class="filtro-row">
+            <label for="f_max_precio">Precio máximo</label>
+            <div class="search-box">
+                <input type="number" id="f_max_precio" class="search-input">
+            </div>
+        </div>
+
+    </div>
+</div>

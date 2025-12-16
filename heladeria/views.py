@@ -2,11 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.timezone import now, timedelta
+from django.template.loader import render_to_string
+from django.http import JsonResponse, HttpResponse
 from django.db import models
 from django.db.models import Sum, F, Q
 from django.contrib import messages
 from datetime import timedelta, datetime
-from django.shortcuts import render
 from .models import Producto, Venta, DetalleVenta, Cliente
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
@@ -14,7 +15,7 @@ import json
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    template_name = "heladeria/dashboard.html"
+    template_name = "heladeria/pos_home.html"
     login_url = "login"
 
     def get_context_data(self, **kwargs):
@@ -39,7 +40,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 
 @login_required
-def dashboard(request):
+def pos_home(request):
     q = (request.GET.get("q") or "").strip()
     productos_qs = Producto.objects.filter(state="ACTIVE").order_by("nombre")
 
@@ -72,9 +73,8 @@ def dashboard(request):
     total_ganancias = sum([v.total() for v in Venta.objects.filter(usuario=request.user)])
 
     total_carrito = 0
-    for detalle in detalles_venta:
-        detalle.subtotal = detalle.cantidad * detalle.producto.precio
-        total_carrito += detalle.subtotal
+    total_carrito = sum(d.subtotal() for d in detalles_venta)
+
 
     params = request.GET.copy()
     params.pop("page", None)
@@ -100,10 +100,40 @@ def dashboard(request):
         venta.fecha_venta = timezone.now()
         venta.save()
         messages.success(request, "La venta ha sido confirmada.")
-        return redirect('dashboard')
+        return redirect('pos_home')
 
-    return render(request, "heladeria/dashboard.html", context)
+    return render(request, "heladeria/pos_home.html", context)
 
+@login_required
+def pos_ajax(request):
+    q = (request.GET.get("q") or "").strip()
+    per_page = request.GET.get("per_page", 8)
+    page = request.GET.get("page", 1)
+
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 8
+
+    productos_qs = Producto.objects.filter(state="ACTIVE").order_by("nombre")
+    if q:
+        productos_qs = productos_qs.filter(nombre__icontains=q)
+
+    paginator = Paginator(productos_qs, per_page)
+    try:
+        page_obj = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    context = {
+        "productos": page_obj.object_list,
+        "page_obj": page_obj,
+        "query": q,
+        "per_page": per_page,
+    }
+
+    html = render_to_string("heladeria/_pos_parcial.html", context, request=request)
+    return HttpResponse(html)
 
 @login_required
 def confirmar_venta(request):
@@ -114,7 +144,7 @@ def confirmar_venta(request):
 
             if not carrito:
                 messages.warning(request, "El carrito está vacío.")
-                return redirect("dashboard")
+                return redirect("pos_home")
 
             cliente_id = request.POST.get("cliente")
             cliente = None
@@ -136,8 +166,11 @@ def confirmar_venta(request):
                     DetalleVenta.objects.create(
                         venta=venta,
                         producto=producto,
-                        cantidad=cantidad
+                        cantidad=cantidad,
+                        precio_unitario=producto.precio,
+                        precio_compra=producto.precio_compra
                     )
+
 
                     producto.stock = max(producto.stock - cantidad, 0)
                     producto.save()
@@ -146,13 +179,13 @@ def confirmar_venta(request):
                     continue  
 
             
-            return redirect("dashboard")
+            return redirect("pos_home")
 
         except Exception as e:
             messages.error(request, f"Ocurrió un error al procesar la venta: {e}")
-            return redirect("dashboard")
+            return redirect("pos_home")
 
-    return redirect("dashboard")
+    return redirect("pos_home")
 
 @login_required
 def products_list(request):
@@ -188,15 +221,15 @@ def add_to_cart(request, producto_id):
         venta.save()
 
         messages.success(request, f"La venta de {producto.nombre} ha sido confirmada.")
-        return redirect('dashboard')
+        return redirect('pos_home')
 
     messages.success(request, f"{producto.nombre} ha sido agregado al carrito.")
-    return redirect('dashboard')
+    return redirect('pos_home')
 
 def get_venta_actual(user):
     venta, created = Venta.objects.get_or_create(usuario=user, estado='PENDING')
     detalles = DetalleVenta.objects.filter(venta=venta)
-    total = sum([d.cantidad * d.producto.precio for d in detalles])
+    total = sum(d.subtotal() for d in detalles)
     return venta, detalles, total
 
 

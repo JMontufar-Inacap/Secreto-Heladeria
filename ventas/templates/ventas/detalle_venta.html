@@ -1,72 +1,154 @@
 {% extends 'heladeria/base_generic.html' %}
+{% load static %}
+{% load formatos %}
 {% block page_title %}Detalle de Venta #{{ venta.id }}{% endblock %}
+
 {% block content %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ventas/css/detalle_ventas.css' %}">
+{% endblock %}
 
-<div class="container mt-4">
+<div class="order-wrapper">
 
+  <div class="order-grid">
 
-  <p><strong>Cliente:</strong> {{ venta.cliente.nombre|default:"-" }}</p>
-  <p><strong>Usuario:</strong> {{ venta.usuario.username }}</p>
-  <p><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
+    <div class="order-left">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0 fw-semibold">
+          Orden #{{ venta.id }}
+        </h5>
 
-  <p><strong>Estado Actual:</strong>
-    {% if venta.estado == 'COMPLETED' %}
-        <span class="badge bg-success">Completada</span>
-    {% elif venta.estado == 'PENDING' %}
-        <span class="badge bg-warning text-dark">Pendiente</span>
-    {% elif venta.estado == 'CANCELLED' %}
-        <span class="badge bg-danger">Cancelada</span>
-    {% elif venta.estado == 'CART' %}
-        <span class="badge bg-secondary">Carrito</span>
-    {% endif %}
-  </p>
-
-  <!-- FORMULARIO PARA CAMBIAR ESTADO -->
-  <form action="{% url 'cambiar_estado' venta.id %}" method="POST" class="mb-3">
-      {% csrf_token %}
-      <label for="estado" class="form-label fw-bold">Cambiar estado:</label>
-      <div class="input-group" style="max-width: 300px;">
-          <select name="estado" id="estado" class="form-select">
-              <option value="PENDING"   {% if venta.estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
-              <option value="COMPLETED" {% if venta.estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
-              <option value="CANCELLED" {% if venta.estado == 'CANCELLED' %}selected{% endif %}>Cancelada</option>
-              <option value="CART"      {% if venta.estado == 'CART' %}selected{% endif %}>Carrito</option>
-          </select>
-          <button class="btn btn-primary" type="submit">Actualizar</button>
+        <form action="{% url 'cambiar_estado' venta.id %}" method="POST" class="d-flex gap-2">
+          {% csrf_token %}
+          <select name="estado" class="form-select form-select-sm">
+            <option value="PENDING"   {% if venta.estado == 'PENDING' %}selected{% endif %}>Pendiente</option>
+            <option value="COMPLETED" {% if venta.estado == 'COMPLETED' %}selected{% endif %}>Completada</option>
+            <option value="CANCELLED" {% if venta.estado == 'CANCELLED' %}selected{% endif %}>Cancelada</option>
+            </select>
+          <button class="btn btn-primary btn-sm">Actualizar</button>
+        </form>
       </div>
-  </form>
 
-  <hr>
-
-  <h5>Productos</h5>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cantidad</th>
-        <th>Precio</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody>
       {% for d in detalles %}
-      <tr>
-        <td>{{ d.producto.nombre }}</td>
-        <td>{{ d.cantidad }}</td>
-        <td>${{ d.producto.precio }}</td>
-        <td>${{ d.subtotal }}</td>
-      </tr>
+      <div class="product-item">
+        <div class="product-img">
+          {% if d.producto.imagen %}
+            <img src="{{ d.producto.imagen.url }}" alt="{{ d.producto.nombre }}">
+          {% else %}
+            🍦
+          {% endif %}
+        </div>
+
+        <div class="product-info">
+          <div>{{ d.producto.nombre }}</div>
+          <small>Cantidad: {{ d.cantidad }}</small>
+        </div>
+
+        <div class="product-price">
+          ${{ d.subtotal|precio_cl }}
+        </div>
+      </div>
       {% endfor %}
-      <tr class="table-secondary">
-        <td colspan="3" class="text-end fw-bold">Total</td>
-        <td class="fw-bold">${{ venta.total }}</td>
-      </tr>
-    </tbody>
-  </table>
 
-  <a href="{% url 'lista_ventas' %}" class="btn btn-outline-primary mt-3">Volver</a>
+      <div class="summary">
+        <div class="summary-row">
+          <span>Subtotal (81%)</span>
+          <span>
+            ${% widthratio venta.total 100 81 as subtotal %}{{ subtotal|precio_cl }}
+          </span>
+        </div>
 
+        <div class="summary-row">
+          <span>Impuestos (19%)</span>
+          <span>
+            ${% widthratio venta.total 100 19 as iva %}{{ iva|precio_cl }}
+          </span>
+        </div>
+
+        <div class="summary-row total">
+          <span>Total</span>
+          <span>${{ venta.total|precio_cl }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="order-right">
+
+      <div class="activity">
+        <h6 class="mb-3 fw-bold">Estado</h6>
+
+        <div class="activity-item">
+          <span class="activity-dot"></span>
+
+          {% if venta.estado == 'COMPLETED' %}
+            <span class="badge-status badge-completed">Completada</span>
+          {% elif venta.estado == 'PENDING' %}
+            <span class="badge-status badge-pending">Pendiente</span>
+          {% elif venta.estado == 'CANCELLED' %}
+            <span class="badge-status badge-cancelled">Cancelada</span>
+          {% elif venta.estado == 'CART' %}
+            <span class="badge-status badge-cart">Carrito</span>
+          {% endif %}
+
+          <small class="text-muted ms-auto">
+            {{ venta.fecha|date:"d/m/Y H:i" }}
+          </small>
+        </div>
+    </div>
+  </div>
+
+  <div class="customer-card">
+    <h6 class="mb-3 fw-bold">Detalles del cliente</h6>
+
+    <div class="customer-grid">
+      <div>
+        <div class="label">Nombre completo</div>
+        <div class="value">
+          {{ venta.cliente.nombre_completo|default:"-" }}
+        </div>
+      </div>
+
+      <div>
+        <div class="label">Teléfono</div>
+        <div class="value">
+          {{ venta.cliente.telefono|default:"-" }}
+        </div>
+      </div>
+
+      <div>
+        <div class="label">Email</div>
+        <div class="value">
+          {{ venta.cliente.email|default:"-" }}
+        </div>
+      </div>
+
+      <div>
+        <div class="label">Dirección</div>
+        <div class="value">
+          {{ venta.cliente.direccion|default:"-" }}
+        </div>
+      </div>
+
+      <div>
+        <div class="label">Región</div>
+        <div class="value">
+          {{ venta.cliente.region|default:"-" }}
+        </div>
+      </div>
+
+      <div>
+        <div class="label">Comuna</div>
+        <div class="value">
+          {{ venta.cliente.comuna|default:"-" }}
+        </div>
+      </div>
+    </div>
+
+    <a href="{% url 'lista_ventas' %}" class="btn btn-outline-secondary btn-sm mt-3">
+      Volver
+    </a>
+  </div>
 </div>
 
 {% endblock %}

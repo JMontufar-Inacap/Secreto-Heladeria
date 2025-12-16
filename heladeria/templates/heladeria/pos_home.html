@@ -1,12 +1,15 @@
 {% extends 'heladeria/base_generic.html' %}
 {% load static %}
-{% block page_title %}Dashboard de Ventas{% endblock %}
+{% load formatos %}
+{% block page_title %}Point of Sale{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'heladeria/css/pos_home.css' %}">
+{% endblock %}
 {% block content %}
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-  /* Asegura que el ROW ocupe el ancho completo y no rompa el layout */
   .dashboard-row {
       margin-left: 0 !important;
       margin-right: 0 !important;
@@ -25,13 +28,8 @@
 
 <div class="dashboard-wrapper">
 
-  <!-- ROW PRINCIPAL DEL DASHBOARD -->
   <div class="row h-100 gx-4 dashboard-row">
-
-    <!-- LISTA DE PRODUCTOS -->
     <div class="col-md-8 col-lg-9 overflow-auto">
-
-      <!-- BUSCADOR -->
       <form method="get" class="mb-3 row g-2 align-items-center">
         <div class="col-sm-6 col-md-6 col-lg-6">
           <input type="text" name="q" class="form-control" placeholder="Buscar producto..." value="{{ query }}">
@@ -39,7 +37,7 @@
 
         <div class="col-auto d-flex align-items-center">
           <label for="per_page" class="me-2 fw-semibold mb-0">Mostrar:</label>
-          <select name="per_page" id="per_page" class="form-select me-2" style="width:auto;" onchange="this.form.submit()">
+          <select name="per_page" id="per_page" class="form-select me-2" style="width:auto;">
             <option value="8" {% if per_page|stringformat:'s' == '8' %}selected{% endif %}>8</option>
             <option value="12" {% if per_page|stringformat:'s' == '12' %}selected{% endif %}>12</option>
             <option value="16" {% if per_page|stringformat:'s' == '16' %}selected{% endif %}>16</option>
@@ -52,95 +50,9 @@
         </div>
       </form>
 
-      <!-- PRODUCTOS -->
-      <div class="row g-4">
-        {% for producto in productos %}
-        <div class="col-6 col-sm-4 col-md-3">
-          <div class="card shadow-sm border-0 h-100">
-
-            {% if producto.imagen %}
-              <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre|escape }}" style="height:150px; object-fit:cover;">
-            {% else %}
-              <div class="bg-secondary d-flex align-items-center justify-content-center" style="height:150px;">
-                <span class="text-white">Sin imagen</span>
-              </div>
-            {% endif %}
-
-            <div class="card-body d-flex flex-column">
-              <h6 class="card-title mb-1 text-truncate" title="{{ producto.nombre|escape }}">
-                {{ producto.nombre }}
-              </h6>
-
-              <p class="mb-2 text-primary fw-bold">${{ producto.precio|floatformat:2 }}</p>
-
-              <div class="d-flex justify-content-center align-items-center mb-2">
-                <div class="input-group input-group-sm" style="width:120px;">
-                  <button class="btn btn-outline-secondary btn-decr" type="button" data-target="#cantidad-{{ producto.id }}">−</button>
-
-                  <input id="cantidad-{{ producto.id }}"
-                    type="text"
-                    class="form-control text-center cantidad-input"
-                    value="1"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    maxlength="2">
-
-                  <button class="btn btn-outline-secondary btn-incr" type="button" data-target="#cantidad-{{ producto.id }}">+</button>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                class="btn btn-success btn-sm mt-auto add-btn"
-                data-id="{{ producto.id }}"
-                data-name="{{ producto.nombre|escape }}"
-                data-price="{{ producto.precio|floatformat:2 }}">
-                Agregar
-              </button>
-            </div>
-
-          </div>
-        </div>
-        {% empty %}
-          <p class="text-muted">No se encontraron productos.</p>
-        {% endfor %}
+      <div id="productos-container">
+        {% include "heladeria/_pos_parcial.html" %}
       </div>
-
-      <!-- PAGINACIÓN -->
-      {% if page_obj.has_other_pages %}
-      <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-
-          {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?q={{ query }}&per_page={{ per_page }}&page={{ page_obj.previous_page_number }}">Anterior</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
-          {% endif %}
-
-          {% for num in page_obj.paginator.page_range %}
-            {% if num == page_obj.number %}
-              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link" href="?q={{ query }}&per_page={{ per_page }}&page={{ num }}">{{ num }}</a>
-              </li>
-            {% endif %}
-          {% endfor %}
-
-          {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?q={{ query }}&per_page={{ per_page }}&page={{ page_obj.next_page_number }}">Siguiente</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
-          {% endif %}
-
-        </ul>
-      </nav>
-      {% endif %}
-
     </div>
 
     <!-- CARRITO -->
@@ -169,7 +81,7 @@
             <select name="cliente" id="cliente" class="form-select" required>
               <option value="" selected disabled>Selecciona un cliente</option>
               {% for cliente in clientes %}
-                <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
+                <option value="{{ cliente.id }}">{{ cliente.nombre_completo }}</option>
               {% endfor %}
             </select>
           </div>
@@ -177,18 +89,11 @@
           <button type="submit" class="btn btn-primary w-100 mt-2" id="finalizar-btn" disabled>
             Finalizar Compra
           </button>
-
         </form>
-
       </div>
-
     </div>
-
   </div>
-
 </div>
-
-
 
 <script>
   const CART_KEY = 'heladeria_carrito_v1';
@@ -215,16 +120,23 @@
   const carrito = loadCartFromStorage();
 
   function parseNumber(v) {
-    const n = parseFloat(String(v).replace(',', '.'));
+    if (!v) return 0;
+
+    v = String(v).replace(/\./g, '');
+
+    v = v.replace(',', '.');
+
+    const n = parseFloat(v);
     return isNaN(n) ? 0 : n;
-  }
+}
+
   
   function actualizarTotalYBoton() {
     let total = 0;
     for (const id in carrito) {
       total += carrito[id].precio * carrito[id].cantidad;
     }
-    document.getElementById('total').textContent = total.toFixed(2);
+    document.getElementById('total').textContent = total.toFixed(0);
     document.getElementById('finalizar-btn').disabled = Object.keys(carrito).length === 0;
     document.getElementById('carrito_json').value = JSON.stringify(carrito);
     saveCartToStorage(carrito);
@@ -244,20 +156,31 @@
       const subtotal = (item.precio * item.cantidad).toFixed(2);
       const row = document.createElement('div');
       row.className = 'd-flex justify-content-between align-items-center border-bottom py-2';
+      const precio = Number(item.precio) || 0;
+      const cantidad = Number(item.cantidad) || 0;
+      const subtotalNum = Number(subtotal) || 0;
       row.innerHTML = `
-        <div style="max-width:70%;">
-          <strong class="d-block text-truncate" title="${item.nombre}">${item.nombre}</strong>
-          <small>${item.cantidad} × $${item.precio.toFixed(2)}</small>
-        </div>
-        <div class="text-end">
-          <div class="fw-bold">$${subtotal}</div>
-          <div class="mt-1">
-            <button class="btn btn-sm btn-outline-secondary btn-decrease" data-id="${id}">−</button>
-            <button class="btn btn-sm btn-outline-secondary btn-increase" data-id="${id}">+</button>
-            <button class="btn btn-sm btn-link text-danger btn-remove" data-id="${id}">Eliminar</button>
+        <div style="display: table; width: 100%;">
+          <!-- Columna izquierda -->
+          <div style="display: table-cell; width: 65%; vertical-align: top;">
+            <strong title="${item.nombre}" style="display: block; white-space: normal;">${item.nombre}</strong>
+            <small>${cantidad} × $${Math.round(precio)}</small>
+          </div>
+
+          <!-- Columna derecha -->
+          <div style="display: table-cell; width: 35%; vertical-align: top; text-align: right;">
+            <div class="fw-bold">$${Math.round(subtotalNum)}</div>
+            <div style="margin-top: 4px;">
+              <button class="btn btn-sm btn-outline-secondary p-1 btn-decrease" data-id="${id}">−</button>
+              <button class="btn btn-sm btn-outline-secondary p-1 btn-increase" data-id="${id}">+</button>
+            </div>
+            <div style="margin-top: 4px;">
+              <button class="btn btn-sm btn-link text-danger p-0 mt-1 btn-remove" data-id="${id}">Eliminar</button>
+            </div>
           </div>
         </div>
       `;
+
       lista.appendChild(row);
     }
 
@@ -331,10 +254,8 @@
     });
 
     inp.addEventListener('input', function () {
-      // Solo permitir números
       this.value = this.value.replace(/[^0-9]/g, '');
 
-      // Evitar que quede vacío
       if (this.value === '') this.value = '1';
     });
   });
@@ -383,7 +304,6 @@
     });
   }
 
-  /* 🔍 FILTRO EN VIVO DE CLIENTES ---------------------------- */
   const clienteSearch = document.getElementById("cliente-search");
   const clienteSelect = document.getElementById("cliente");
 
@@ -403,9 +323,117 @@
       }
     });
   }
-  /* ---------------------------------------------------------- */
+
+/* Ajax */
+async function cargarProductos(params = {}) {
+    const url = new URL("/heladeria/pos/ajax/", window.location.origin);  // Ajusta la URL a tu vista
+    Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
+
+    const response = await fetch(url);
+    if (!response.ok) return;
+
+    const html = await response.text();
+    const contenedor = document.getElementById("productos-container");
+    contenedor.innerHTML = html;
+
+    // Volver a inicializar botones de carrito en el nuevo HTML
+    inicializarBotonesProductos();
+}
+
+// Captura búsqueda
+const busquedaInput = document.querySelector('input[name="q"]');
+busquedaInput?.addEventListener("input", () => {
+    cargarProductos({
+        q: busquedaInput.value,
+        per_page: document.getElementById("per_page").value,
+        page: 1
+    });
+});
+
+// Captura cambio de per_page
+const perPageSelect = document.getElementById("per_page");
+perPageSelect?.addEventListener("change", () => {
+    cargarProductos({
+        q: busquedaInput.value,
+        per_page: perPageSelect.value,
+        page: 1
+    });
+});
+
+// Captura paginación (delegación de eventos)
+document.getElementById("productos-container").addEventListener("click", (e) => {
+    const btn = e.target.closest("button.pagination-btn[data-page]");
+    if (!btn) return;
+    const page = btn.dataset.page;
+    cargarProductos({
+        q: busquedaInput.value,
+        per_page: perPageSelect.value,
+        page: page
+    });
+});
+
+
+// Función para volver a enlazar botones de carrito
+function inicializarBotonesProductos() {
+    // Botones Agregar
+    document.querySelectorAll('.add-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const name = btn.dataset.name || 'Producto';
+            const price = parseNumber(btn.dataset.price);
+            const input = document.getElementById(`cantidad-${id}`);
+            let cantidad = 1;
+            if (input) {
+                cantidad = parseInt(input.value) || 1;
+                if (cantidad < 1) cantidad = 1;
+            }
+            if (carrito[id]) {
+                carrito[id].cantidad = Math.min(100, carrito[id].cantidad + cantidad);
+            } else {
+                carrito[id] = { nombre: name, precio: price, cantidad: Math.min(100, cantidad) };
+            }
+            renderCarrito();
+            actualizarTotalYBoton();
+        });
+    });
+
+    // Botones +/-
+    document.querySelectorAll('.btn-incr, .btn-decr').forEach(b => {
+        b.addEventListener('click', (e) => {
+            const selector = e.currentTarget.dataset.target;
+            const input = document.querySelector(selector);
+            if (!input) return;
+            let val = parseInt(input.value) || 1;
+            if (e.currentTarget.classList.contains('btn-incr')) {
+                val = Math.min(100, val + 1);
+            } else {
+                val = Math.max(1, val - 1);
+            }
+            input.value = val;
+        });
+    });
+
+    // Inputs de cantidad
+    document.querySelectorAll('.cantidad-input').forEach(inp => {
+        inp.addEventListener('focus', function () {
+            if (this.value === '1') this.value = '';
+        });
+        inp.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value === '') this.value = '1';
+        });
+    });
+}
+
+const searchForm = document.querySelector('form[method="get"]');
+searchForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    cargarProductos({
+        q: busquedaInput.value,
+        per_page: perPageSelect.value,
+        page: 1
+    });
+});
 
 </script>
-
-
 {% endblock %}

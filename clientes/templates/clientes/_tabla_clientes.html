@@ -1,0 +1,101 @@
+{# clientes/_tabla_clientes.html #}
+{% load static %}
+{% load formatos %}
+{% load permisos_extras %}
+<link rel="stylesheet" href="{% static 'clientes/css/lista_clientes.css' %}">
+
+<div class="table-container">
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th style="width:40px;">
+                    <input type="checkbox" class="custom-checkbox" id="selectAllLocal">
+                </th>
+                <th>Nombre</th>
+                <th>RUT</th>
+                <th>Dirección</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for cliente in page_obj %}
+            <tr class="table-row">
+                <td>
+                    <input type="checkbox" class="custom-checkbox chkCliente" value="{{ cliente.email }}">
+                </td>
+
+                <td class="fw-600">{{ cliente.nombre_completo }}</td>
+                <td>{{ cliente.rut |formato_rut}}</td>
+                <td>{{ cliente.direccion|default:"-" }}</td>
+                <td>{{ cliente.telefono|formato_telefono|default:"-" }}</td>
+                <td>{{ cliente.email|default:"-" }}</td>
+
+                <td>
+                    {% if request.user|tiene_grupo:"Admin" or request.user|tiene_grupo:"Editor" %}
+                        <a href="{% url 'detalle_cliente' cliente.pk %}" class="btn-view">Ver</a>
+                        <a href="{% url 'editar_cliente' cliente.pk %}" class="btn-view">Editar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="no-data-msg" style="text-align:center;color:#9CA3AF;">No se encontraron clientes.</td></tr>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="table-footer" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-top:1rem;">
+
+        <!-- LEFT: resultados y selector per_page -->
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <div class="results-per-page">
+                <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
+            </div>
+        </div>
+
+        <!-- RIGHT: paginación -->
+        <div class="pagination">
+
+            <!-- FIRST -->
+            <button class="pagination-btn"
+                    {% if page_obj.has_previous %}
+                        data-page="1"
+                    {% else %} disabled {% endif %}>
+                ««
+            </button>
+
+            <!-- PREV -->
+            <button class="pagination-btn"
+                    {% if page_obj.has_previous %}
+                        data-page="{{ page_obj.previous_page_number }}"
+                    {% else %} disabled {% endif %}>
+                «
+            </button>
+
+            <span class="pagination-info">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            <!-- NEXT -->
+            <button class="pagination-btn"
+                    {% if page_obj.has_next %}
+                        data-page="{{ page_obj.next_page_number }}"
+                    {% else %} disabled {% endif %}>
+                »
+            </button>
+
+            <!-- LAST -->
+            <button class="pagination-btn"
+                    {% if page_obj.has_next %}
+                        data-page="{{ page_obj.paginator.num_pages }}"
+                    {% else %} disabled {% endif %}>
+                »»
+            </button>
+        </div>
+    </div>
+</div>

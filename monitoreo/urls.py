@@ -7,14 +7,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('', DashboardView.as_view(), name='dashboard'),
-
-    path('accounts/', include('accounts.urls')),
-
-    path('heladeria/', include('heladeria.urls')),
-
-    # Aquí registramos la app de ventas correctamente con namespace
-    path('ventas/', include(('ventas.urls', 'ventas'), namespace='ventas')),
+    path('', DashboardView.as_view(), name='dashboard'),  # home general
+    path('accounts/', include('accounts.urls')),          # login, logout, etc.
+    path('heladeria/', include('heladeria.urls')),        # todo lo de heladería / POS
 ]
 
 if settings.DEBUG:
